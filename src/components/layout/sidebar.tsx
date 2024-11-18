@@ -4,7 +4,7 @@ import {
   LayoutDashboard,
   PlusCircle,
   Coins,
-  Settings,
+  // Settings,
   Menu,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';

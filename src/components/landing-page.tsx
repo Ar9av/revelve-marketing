@@ -19,8 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { ModeToggle } from "./mode-toggle";
 import { TextHoverEffect } from "@/components/ui/text-hover-effect";
 import { UserButton } from '@clerk/clerk-react';
-
-export function LandingPage({ isSignedIn }) {
+export function LandingPage({ isSignedIn }: { isSignedIn: boolean }) {
   const navigate = useNavigate();
 
   return (

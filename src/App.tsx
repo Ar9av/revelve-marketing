@@ -9,7 +9,7 @@ import { PromotionDetails } from '@/components/promotions/promotion-details';
 import { CreditsPage } from '@/components/credits/credits-page';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Rocket } from 'lucide-react';
-import { ClerkProvider, SignIn, SignUp, SignedIn, SignedOut, useAuth } from '@clerk/clerk-react';
+import { ClerkProvider, SignIn, SignUp, SignedIn, SignedOut } from '@clerk/clerk-react';
 import { UserButton } from '@clerk/clerk-react';
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -69,7 +69,7 @@ function App() {
         <Router>
           <SignedOut>
             <Routes>
-              <Route path="/" element={<LandingPage />} />
+              <Route path="/" element={<LandingPage isSignedIn={false} />} />
               <Route path="/sign-in/*" element={<SignIn routing="path" path="/sign-in" />} />
               <Route path="/sign-up/*" element={<SignUp routing="path" path="/sign-up" />} />
               <Route path="*" element={<Navigate to="/sign-in" replace />} />
@@ -77,7 +77,7 @@ function App() {
           </SignedOut>
           <SignedIn>
             <Routes>
-              <Route path="/" element={<LandingPage isSignedIn />} />
+              <Route path="/" element={<LandingPage isSignedIn={true} />} />
               <Route path="/*" element={<MainLayout />} />
             </Routes>
           </SignedIn>
