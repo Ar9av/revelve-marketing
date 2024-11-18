@@ -29,7 +29,7 @@ export function PromotionBoostDialog({ promotionId }: PromotionBoostDialogProps)
       <DialogTrigger asChild>
         <Button variant="outline" className="gap-2">
           <Zap className="h-4 w-4" />
-          Super Boost
+          Super Boost {promotionId}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">

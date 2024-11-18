@@ -80,7 +80,7 @@ export function CampaignForm() {
           <div className="space-y-2">
             <Slider
               value={[tone]}
-              onValueChange={(value) => setTone(value[0])}
+              onValueChange={(value: any) => setTone(value[0])}
               max={100}
               step={1}
             />
