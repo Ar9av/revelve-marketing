@@ -149,7 +149,7 @@ export function Dashboard() {
             <CardTitle>Sentiment Analysis</CardTitle>
           </CardHeader>
           <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="80%">
               <PieChart>
                 <Pie
                   data={sentimentData}

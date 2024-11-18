@@ -9,7 +9,7 @@ import { PromotionDetails } from '@/components/promotions/promotion-details';
 import { CreditsPage } from '@/components/credits/credits-page';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Rocket } from 'lucide-react';
-import { ClerkProvider, SignIn, SignUp, SignedIn, SignedOut } from '@clerk/clerk-react';
+import { ClerkProvider, SignIn, SignUp, SignedIn, SignedOut, useAuth } from '@clerk/clerk-react';
 import { UserButton } from '@clerk/clerk-react';
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -17,35 +17,48 @@ const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 function ProtectedApp() {
   return (
     <SignedIn>
-      <div className="min-h-screen bg-background">
-        <header className="border-b fixed top-0 right-0 left-0 z-50 bg-background">
-          <div className="flex h-20 items-center justify-between w-full px-4 lg:px-8">
-            <div className="flex items-center gap-2">
-              <Sidebar />
-              <Rocket className="h-6 w-6" />
-              <h1 className="text-xl font-bold">Reddit Promoter</h1>
-            </div>
-            <div className="flex items-center gap-4 ml-auto pr-4">
-              <ModeToggle />
-              <UserButton />
-            </div>
-          </div>
-        </header>
-
-        <main className="pt-16 lg:pl-[240px]">
-          <div className="container px-4 py-6 lg:px-8">
-            <Routes>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/campaigns/new" element={<CampaignForm />} />
-              <Route path="/promotions" element={<PromotionsList />} />
-              <Route path="/promotions/:id" element={<PromotionDetails />} />
-              <Route path="/credits" element={<CreditsPage />} />
-            </Routes>
-          </div>
-        </main>
-      </div>
+      <Routes>
+        <Route path="/" element={<LandingPage isSignedIn />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/campaigns/new" element={<CampaignForm />} />
+        <Route path="/promotions" element={<PromotionsList />} />
+        <Route path="/promotions/:id" element={<PromotionDetails />} />
+        <Route path="/credits" element={<CreditsPage />} />
+      </Routes>
     </SignedIn>
+  );
+}
+
+function HeaderAndSidebar() {
+  return (
+    <header className="border-b fixed top-0 right-0 left-0 z-50 bg-background">
+      <div className="flex h-20 items-center justify-between w-full px-4 lg:px-8">
+        <div className="flex items-center gap-2">
+          <Sidebar />
+          <Rocket className="h-6 w-6" />
+          <h1 className="text-xl font-bold">Revelve</h1>
+        </div>
+        <div className="flex items-center gap-4 ml-auto pr-4">
+          <ModeToggle />
+          <UserButton />
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function MainLayout() {
+  return (
+    <div className="min-h-screen bg-background">
+      <HeaderAndSidebar />
+      <main className="pt-16 lg:pl-[240px]">
+        <div className="container px-4 py-6 lg:px-8">
+          <ProtectedApp />
+        </div>
+      </main>
+    </div>
   );
 }
 
@@ -62,7 +75,12 @@ function App() {
               <Route path="*" element={<Navigate to="/sign-in" replace />} />
             </Routes>
           </SignedOut>
-          <ProtectedApp />
+          <SignedIn>
+            <Routes>
+              <Route path="/" element={<LandingPage isSignedIn />} />
+              <Route path="/*" element={<MainLayout />} />
+            </Routes>
+          </SignedIn>
         </Router>
       </ThemeProvider>
     </ClerkProvider>

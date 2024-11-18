@@ -28,11 +28,11 @@ const menuItems = [
     icon: Coins,
     href: '/credits',
   },
-  {
-    title: 'Settings',
-    icon: Settings,
-    href: '/settings',
-  },
+  // {
+  //   title: 'Settings',
+  //   icon: Settings,
+  //   href: '/settings',
+  // },
 ];
 
 export function Sidebar() {

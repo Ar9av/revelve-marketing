@@ -2,11 +2,13 @@ import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
   Bot,
+  Rocket,
   MessageSquare,
   Target,
   Check,
   X,
 } from "lucide-react";
+
 import {
   Accordion,
   AccordionContent,
@@ -15,8 +17,10 @@ import {
 } from "@/components/ui/accordion";
 import { useNavigate } from "react-router-dom";
 import { ModeToggle } from "./mode-toggle";
+import { TextHoverEffect } from "@/components/ui/text-hover-effect";
+import { UserButton } from '@clerk/clerk-react';
 
-export function LandingPage() {
+export function LandingPage({ isSignedIn }) {
   const navigate = useNavigate();
 
   return (
@@ -25,13 +29,19 @@ export function LandingPage() {
       <header className="fixed top-0 w-full border-b bg-background/80 backdrop-blur-sm z-50">
         <div className="flex h-16 items-center justify-between w-full px-4">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-            <Bot className="h-6 w-6" />
+          <Rocket className="h-6 w-6" />
             <h1 className="text-xl font-bold">Revelve</h1>
           </div>
           <div className="flex items-start gap-4 justify-end">
             <ModeToggle />
-            <Button variant="ghost" onClick={() => navigate('/sign-in')}>Sign In</Button>
-            <Button onClick={() => navigate('/sign-up')}>Get Started</Button>
+            {!isSignedIn ? (
+              <>
+                <Button variant="ghost" onClick={() => navigate('/sign-in')}>Sign In</Button>
+                <Button onClick={() => navigate('/sign-up')}>Get Started</Button>
+              </>
+            ) : (
+              <UserButton />
+            )}
           </div>
         </div>
       </header>
@@ -39,6 +49,9 @@ export function LandingPage() {
       {/* Hero Section */}
       <section className="min-h-[55vh] pt-16 pb-10 px-4 flex items-center">
         <div className="container mx-auto text-center">
+          <div className="h-[15rem] flex items-center justify-center">
+            <TextHoverEffect text="Revelve" />
+          </div>
           <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-blue-500">
             Automate Your Reddit Marketing
           </h1>
@@ -46,13 +59,22 @@ export function LandingPage() {
             Generate authentic, human-like responses for your product across relevant Reddit threads
           </p>
           <div className="flex gap-4 justify-center">
-            <Button size="lg" className="group" onClick={() => navigate('/sign-up')}>
-              Get Started
-              <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate('/sign-in')}>
-              Sign In
-            </Button>
+            {isSignedIn ? (
+              <Button size="lg" className="group" onClick={() => navigate('/dashboard')}>
+                Go to Dashboard
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Button>
+            ) : (
+              <>
+                <Button size="lg" className="group" onClick={() => navigate('/sign-up')}>
+                  Get Started
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Button>
+                <Button size="lg" variant="outline" onClick={() => navigate('/sign-in')}>
+                  Sign In
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -74,47 +96,49 @@ export function LandingPage() {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-32">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-4">Simple Pricing</h2>
-          <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
-            Choose the perfect plan for your marketing needs. All plans include our core features.
-          </p>
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {pricingPlans.map((plan, index) => (
-              <div key={index} className="p-6 rounded-lg border bg-card">
-                <h3 className="text-2xl font-semibold mb-2">{plan.name}</h3>
-                <div className="mb-4">
-                  <span className="text-4xl font-bold">${plan.price}</span>
-                  <span className="text-muted-foreground">/month</span>
+      {!isSignedIn && (
+        <section className="py-32">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-4">Simple Pricing</h2>
+            <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
+              Choose the perfect plan for your marketing needs. All plans include our core features.
+            </p>
+            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+              {pricingPlans.map((plan, index) => (
+                <div key={index} className="p-6 rounded-lg border bg-card">
+                  <h3 className="text-2xl font-semibold mb-2">{plan.name}</h3>
+                  <div className="mb-4">
+                    <span className="text-4xl font-bold">${plan.price}</span>
+                    <span className="text-muted-foreground">/month</span>
+                  </div>
+                  <p className="text-muted-foreground mb-6">{plan.description}</p>
+                  <ul className="space-y-3 mb-8">
+                    {plan.features.map((feature, i) => (
+                      <li key={i} className="flex items-center gap-2">
+                        {feature.included ? (
+                          <Check className="h-5 w-5 text-green-500" />
+                        ) : (
+                          <X className="h-5 w-5 text-red-500" />
+                        )}
+                        <span className={!feature.included ? "text-muted-foreground" : ""}>
+                          {feature.text}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    className="w-full"
+                    variant={plan.name === "Pro" ? "default" : "outline"}
+                    onClick={() => navigate('/sign-up')}
+                  >
+                    Get Started
+                  </Button>
                 </div>
-                <p className="text-muted-foreground mb-6">{plan.description}</p>
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-center gap-2">
-                      {feature.included ? (
-                        <Check className="h-5 w-5 text-green-500" />
-                      ) : (
-                        <X className="h-5 w-5 text-red-500" />
-                      )}
-                      <span className={!feature.included ? "text-muted-foreground" : ""}>
-                        {feature.text}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  className="w-full"
-                  variant={plan.name === "Pro" ? "default" : "outline"}
-                  onClick={() => navigate('/sign-up')}
-                >
-                  Get Started
-                </Button>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* FAQ Section */}
       <section className="py-32">
@@ -139,20 +163,22 @@ export function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-32">
-        <div className="container mx-auto px-4 text-center">
-          <div className="max-w-3xl mx-auto p-8 rounded-lg border bg-card">
-            <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
-            <p className="text-muted-foreground mb-8">
-              Join thousands of marketers who are already using our platform to grow their Reddit presence.
-            </p>
-            <Button size="lg" className="group" onClick={() => navigate('/sign-up')}>
-              Start Your Free Trial
-              <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Button>
+      {!isSignedIn && (
+        <section className="py-32">
+          <div className="container mx-auto px-4 text-center">
+            <div className="max-w-3xl mx-auto p-8 rounded-lg border bg-card">
+              <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
+              <p className="text-muted-foreground mb-8">
+                Join thousands of marketers who are already using our platform to grow their Reddit presence.
+              </p>
+              <Button size="lg" className="group" onClick={() => navigate('/sign-up')}>
+                Start Your Free Trial
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 }
