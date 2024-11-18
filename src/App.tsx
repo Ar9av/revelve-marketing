@@ -35,7 +35,7 @@ function HeaderAndSidebar() {
   return (
     <header className="border-b fixed top-0 right-0 left-0 z-50 bg-background">
       <div className="flex h-20 items-center justify-between w-full px-4 lg:px-8">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.location.href = '/'}>
           <Sidebar />
           <Rocket className="h-6 w-6" />
           <h1 className="text-xl font-bold">Revelve</h1>
