@@ -14,20 +14,22 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useNavigate } from "react-router-dom";
+import { ModeToggle } from "./mode-toggle";
 
 export function LandingPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="w-full bg-background">
+    <div className="w-full">
       {/* Header */}
       <header className="fixed top-0 w-full border-b bg-background/80 backdrop-blur-sm z-50">
-        <div className="container flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
+        <div className="flex h-16 items-center justify-between w-full px-4">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
             <Bot className="h-6 w-6" />
-            <h1 className="text-xl font-bold">Reddit Promoter</h1>
+            <h1 className="text-xl font-bold">Revelve</h1>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-start gap-4 justify-end">
+            <ModeToggle />
             <Button variant="ghost" onClick={() => navigate('/sign-in')}>Sign In</Button>
             <Button onClick={() => navigate('/sign-up')}>Get Started</Button>
           </div>
@@ -35,7 +37,7 @@ export function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="min-h-[60vh] pt-16 pb-10 px-4 flex items-center">
+      <section className="min-h-[55vh] pt-16 pb-10 px-4 flex items-center">
         <div className="container mx-auto text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-blue-500">
             Automate Your Reddit Marketing
@@ -56,7 +58,7 @@ export function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-32 bg-muted/50">
+      <section className="py-16">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">Key Features</h2>
           <div className="grid md:grid-cols-3 gap-8">
@@ -115,7 +117,7 @@ export function LandingPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-32 bg-muted/50">
+      <section className="py-32">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-4">
             Frequently Asked Questions
