@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Progress } from '@/components/ui/progress';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Rocket } from 'lucide-react';
 
 const menuItems = [
   {
@@ -43,6 +45,12 @@ export function Sidebar() {
     <div className="flex flex-col h-full">
       <div className="flex-1 space-y-4 py-4">
         <div className="px-3 py-2">
+          <div className="flex items-center gap-2 mb-4">
+          <Link to="/" className="flex items-center gap-2 cursor-pointer">
+            <Rocket className="h-6 w-6" />
+            <h1 className="text-xl font-bold">Revelve</h1>
+          </Link>
+        </div>
           <div className="space-y-1">
             {menuItems.map((item) => (
               <NavLink
