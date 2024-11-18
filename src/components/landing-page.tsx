@@ -1,7 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { AnimatedText } from "@/components/ui/animated-text";
-import { MovingBorder } from "@/components/ui/moving-border";
-import { motion } from "framer-motion";
 import {
   ArrowRight,
   Bot,
@@ -16,62 +13,66 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { useNavigate } from "react-router-dom";
 
-interface LandingPageProps {
-  onGetStarted: () => void;
-}
+export function LandingPage() {
+  const navigate = useNavigate();
 
-export function LandingPage({ onGetStarted }: LandingPageProps) {
   return (
     <div className="w-full bg-background">
+      {/* Header */}
+      <header className="fixed top-0 w-full border-b bg-background/80 backdrop-blur-sm z-50">
+        <div className="container flex h-16 items-center justify-between px-4">
+          <div className="flex items-center gap-2">
+            <Bot className="h-6 w-6" />
+            <h1 className="text-xl font-bold">Reddit Promoter</h1>
+          </div>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" onClick={() => navigate('/sign-in')}>Sign In</Button>
+            <Button onClick={() => navigate('/sign-up')}>Get Started</Button>
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
-      <section className="min-h-[90vh] flex items-center justify-center px-4 relative">
-        <div className="container mx-auto text-center relative z-10 py-20">
-          <AnimatedText
-            text="Automate Your Reddit Marketing"
-            className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-blue-500"
-          />
-          <AnimatedText
-            text="Generate authentic, human-like responses for your product across relevant Reddit threads"
-            className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto"
-          />
+      <section className="min-h-[60vh] pt-16 pb-10 px-4 flex items-center">
+        <div className="container mx-auto text-center">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-blue-500">
+            Automate Your Reddit Marketing
+          </h1>
+          <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+            Generate authentic, human-like responses for your product across relevant Reddit threads
+          </p>
           <div className="flex gap-4 justify-center">
-            <Button size="lg" className="group" onClick={onGetStarted}>
+            <Button size="lg" className="group" onClick={() => navigate('/sign-up')}>
               Get Started
               <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Button>
-            <Button size="lg" variant="outline">
-              Learn More
+            <Button size="lg" variant="outline" onClick={() => navigate('/sign-in')}>
+              Sign In
             </Button>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-24 bg-muted/50">
+      <section className="py-32 bg-muted/50">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">Key Features</h2>
           <div className="grid md:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <MovingBorder key={index} containerClassName="h-full">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.2 }}
-                  className="p-6 h-full"
-                >
-                  <feature.icon className="h-12 w-12 mb-4 text-primary" />
-                  <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-muted-foreground">{feature.description}</p>
-                </motion.div>
-              </MovingBorder>
+              <div key={index} className="p-6 rounded-lg border bg-card">
+                <feature.icon className="h-12 w-12 mb-4 text-primary" />
+                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                <p className="text-muted-foreground">{feature.description}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
       {/* Pricing Section */}
-      <section className="py-24">
+      <section className="py-32">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-4">Simple Pricing</h2>
           <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
@@ -79,51 +80,42 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
           </p>
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {pricingPlans.map((plan, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.2 }}
-              >
-                <MovingBorder containerClassName="h-full">
-                  <div className="p-6 h-full flex flex-col">
-                    <h3 className="text-2xl font-semibold mb-2">{plan.name}</h3>
-                    <div className="mb-4">
-                      <span className="text-4xl font-bold">${plan.price}</span>
-                      <span className="text-muted-foreground">/month</span>
-                    </div>
-                    <p className="text-muted-foreground mb-6">{plan.description}</p>
-                    <ul className="space-y-3 mb-8 flex-grow">
-                      {plan.features.map((feature, i) => (
-                        <li key={i} className="flex items-center gap-2">
-                          {feature.included ? (
-                            <Check className="h-5 w-5 text-green-500" />
-                          ) : (
-                            <X className="h-5 w-5 text-red-500" />
-                          )}
-                          <span className={!feature.included ? "text-muted-foreground" : ""}>
-                            {feature.text}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                    <Button
-                      className="w-full"
-                      variant={plan.name === "Pro" ? "default" : "outline"}
-                      onClick={onGetStarted}
-                    >
-                      Get Started
-                    </Button>
-                  </div>
-                </MovingBorder>
-              </motion.div>
+              <div key={index} className="p-6 rounded-lg border bg-card">
+                <h3 className="text-2xl font-semibold mb-2">{plan.name}</h3>
+                <div className="mb-4">
+                  <span className="text-4xl font-bold">${plan.price}</span>
+                  <span className="text-muted-foreground">/month</span>
+                </div>
+                <p className="text-muted-foreground mb-6">{plan.description}</p>
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      {feature.included ? (
+                        <Check className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <X className="h-5 w-5 text-red-500" />
+                      )}
+                      <span className={!feature.included ? "text-muted-foreground" : ""}>
+                        {feature.text}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  className="w-full"
+                  variant={plan.name === "Pro" ? "default" : "outline"}
+                  onClick={() => navigate('/sign-up')}
+                >
+                  Get Started
+                </Button>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
       {/* FAQ Section */}
-      <section className="py-24 bg-muted/50">
+      <section className="py-32 bg-muted/50">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-4">
             Frequently Asked Questions
@@ -145,18 +137,18 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24">
+      <section className="py-32">
         <div className="container mx-auto px-4 text-center">
-          <MovingBorder className="max-w-3xl mx-auto" containerClassName="p-8">
+          <div className="max-w-3xl mx-auto p-8 rounded-lg border bg-card">
             <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
             <p className="text-muted-foreground mb-8">
               Join thousands of marketers who are already using our platform to grow their Reddit presence.
             </p>
-            <Button size="lg" className="group" onClick={onGetStarted}>
+            <Button size="lg" className="group" onClick={() => navigate('/sign-up')}>
               Start Your Free Trial
               <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Button>
-          </MovingBorder>
+          </div>
         </div>
       </section>
     </div>

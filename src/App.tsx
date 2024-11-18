@@ -9,63 +9,63 @@ import { PromotionDetails } from '@/components/promotions/promotion-details';
 import { CreditsPage } from '@/components/credits/credits-page';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Rocket } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { ClerkProvider, SignIn, SignUp, SignedIn, SignedOut } from '@clerk/clerk-react';
+import { UserButton } from '@clerk/clerk-react';
 
-function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
-  if (!isLoggedIn) {
-    return (
-      <ThemeProvider defaultTheme="system" storageKey="reddit-marketing-theme">
-        <header className="fixed top-0 w-full border-b bg-background/80 backdrop-blur-sm z-50">
-          <div className="container flex h-16 items-center justify-between px-4">
+function ProtectedApp() {
+  return (
+    <SignedIn>
+      <div className="min-h-screen bg-background">
+        <header className="border-b fixed top-0 right-0 left-0 z-50 bg-background">
+          <div className="flex h-20 items-center justify-between w-full px-4 lg:px-8">
             <div className="flex items-center gap-2">
+              <Sidebar />
               <Rocket className="h-6 w-6" />
               <h1 className="text-xl font-bold">Reddit Promoter</h1>
             </div>
-            <div className="flex items-center gap-4">
-              <Button variant="outline" className="mr-2" onClick={() => setIsLoggedIn(true)}>Log In</Button>
-              <Button onClick={() => setIsLoggedIn(true)}>Sign Up</Button>
+            <div className="flex items-center gap-4 ml-auto pr-4">
               <ModeToggle />
+              <UserButton />
             </div>
           </div>
         </header>
-        <LandingPage onGetStarted={() => setIsLoggedIn(true)} />
-      </ThemeProvider>
-    );
-  }
 
+        <main className="pt-16 lg:pl-[240px]">
+          <div className="container px-4 py-6 lg:px-8">
+            <Routes>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/campaigns/new" element={<CampaignForm />} />
+              <Route path="/promotions" element={<PromotionsList />} />
+              <Route path="/promotions/:id" element={<PromotionDetails />} />
+              <Route path="/credits" element={<CreditsPage />} />
+            </Routes>
+          </div>
+        </main>
+      </div>
+    </SignedIn>
+  );
+}
+
+function App() {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="reddit-marketing-theme">
-      <Router>
-        <div className="min-h-screen bg-background">
-          <header className="border-b fixed top-0 right-0 left-0 z-50 bg-background">
-            <div className="container flex h-16 items-center justify-between px-4 lg:px-8">
-              <div className="flex items-center gap-2">
-                <Sidebar />
-                <Rocket className="h-6 w-6" />
-                <h1 className="text-xl font-bold">Reddit Promoter</h1>
-              </div>
-              <ModeToggle />
-            </div>
-          </header>
-
-          <main className="pt-16 lg:pl-[240px]">
-            <div className="container px-4 py-6 lg:px-8">
-              <Routes>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/campaigns/new" element={<CampaignForm />} />
-                <Route path="/promotions" element={<PromotionsList />} />
-                <Route path="/promotions/:id" element={<PromotionDetails />} />
-                <Route path="/credits" element={<CreditsPage />} />
-              </Routes>
-            </div>
-          </main>
-        </div>
-      </Router>
-    </ThemeProvider>
+    <ClerkProvider publishableKey={clerkPubKey}>
+      <ThemeProvider defaultTheme="system" storageKey="reddit-marketing-theme">
+        <Router>
+          <SignedOut>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/sign-in/*" element={<SignIn routing="path" path="/sign-in" />} />
+              <Route path="/sign-up/*" element={<SignUp routing="path" path="/sign-up" />} />
+              <Route path="*" element={<Navigate to="/sign-in" replace />} />
+            </Routes>
+          </SignedOut>
+          <ProtectedApp />
+        </Router>
+      </ThemeProvider>
+    </ClerkProvider>
   );
 }
 
