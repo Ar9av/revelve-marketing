@@ -6,6 +6,9 @@ export interface Post {
   totalLikes: number;
   totalReplies: number;
   upvotes: number;
+  positive: number;
+  negative: number;
+  neutral: number;
   subreddit: string;
   timePosted: string;
   data?: any;
@@ -16,6 +19,9 @@ export interface CampaignStats {
   totalLikes: number;
   totalReplies: number;
   totalUpvotes: number;
+  positive: number;
+  negative: number;
+  neutral: number;
 }
 
 export interface Campaign {
@@ -32,6 +38,21 @@ export interface Campaign {
   stats?: CampaignStats;
   postCount?: number;
   posts?: Post[];
+}
+
+export interface DashboardData {
+  stats: CampaignStats;
+  engagementData: Array<{ date: string; value: number }>;
+  recentPosts: Array<{
+    id: string;
+    subreddit: string;
+    upvotes: number;
+    timePosted: string;
+    postUrl: string;
+  }>;
+  activeCampaigns: number;
+  totalCampaigns: number;
+  totalPosts: number;
 }
 
 export interface CreateCampaignInput {
@@ -59,6 +80,22 @@ export async function createCampaign(data: CreateCampaignInput): Promise<Campaig
   return response.json();
 }
 
+export async function updateCampaignStatus(id: string, status: string): Promise<Campaign> {
+  const response = await fetch(`${API_URL}/campaigns/${id}/status`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to update campaign status');
+  }
+
+  return response.json();
+}
+
 export async function getCampaigns(userId: string): Promise<Campaign[]> {
   const response = await fetch(`${API_URL}/campaigns/${userId}`);
 
@@ -74,6 +111,16 @@ export async function getCampaignDetails(id: string): Promise<Campaign> {
 
   if (!response.ok) {
     throw new Error('Failed to fetch campaign details');
+  }
+
+  return response.json();
+}
+
+export async function getDashboardData(userId: string): Promise<DashboardData> {
+  const response = await fetch(`${API_URL}/dashboard/${userId}`);
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch dashboard data');
   }
 
   return response.json();

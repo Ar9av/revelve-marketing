@@ -24,6 +24,20 @@ app.post('/api/campaigns', async (req, res) => {
   }
 });
 
+// Update campaign status
+app.patch('/api/campaigns/:id/status', async (req, res) => {
+  try {
+    const campaign = await prisma.campaign.update({
+      where: { id: req.params.id },
+      data: { status: req.body.status }
+    });
+    res.json(campaign);
+  } catch (error) {
+    console.error('Failed to update campaign status:', error);
+    res.status(500).json({ error: 'Failed to update campaign status' });
+  }
+});
+
 // Get user's campaigns with aggregated post data
 app.get('/api/campaigns/:userId', async (req, res) => {
   try {
@@ -40,6 +54,9 @@ app.get('/api/campaigns/:userId', async (req, res) => {
             totalLikes: true,
             totalReplies: true,
             upvotes: true,
+            positive: true,
+            negative: true,
+            neutral: true,
           }
         }
       },
@@ -54,7 +71,17 @@ app.get('/api/campaigns/:userId', async (req, res) => {
         totalLikes: acc.totalLikes + post.totalLikes,
         totalReplies: acc.totalReplies + post.totalReplies,
         totalUpvotes: acc.totalUpvotes + post.upvotes,
-      }), { totalLikes: 0, totalReplies: 0, totalUpvotes: 0 });
+        positive: acc.positive + post.positive,
+        negative: acc.negative + post.negative,
+        neutral: acc.neutral + post.neutral,
+      }), { 
+        totalLikes: 0, 
+        totalReplies: 0, 
+        totalUpvotes: 0,
+        positive: 0,
+        negative: 0,
+        neutral: 0
+      });
 
       return {
         ...campaign,
@@ -70,39 +97,148 @@ app.get('/api/campaigns/:userId', async (req, res) => {
   }
 });
 
-// Get campaign details with posts
-app.get('/api/campaigns/details/:id', async (req, res) => {
+// Get user's dashboard stats
+app.get('/api/dashboard/:userId', async (req, res) => {
   try {
-    const campaign = await prisma.campaign.findUnique({
-      where: { id: req.params.id },
+    const campaigns = await prisma.campaign.findMany({
+      where: {
+        userId: req.params.userId
+      },
       include: {
-        posts: {
-          orderBy: { timePosted: 'desc' }
-        }
+        posts: true
       }
     });
 
-    if (!campaign) {
-      return res.status(404).json({ error: 'Campaign not found' });
-    }
+    // Calculate overall stats
+    const stats = campaigns.reduce((acc, campaign) => {
+      const campaignStats = campaign.posts.reduce((postAcc, post) => ({
+        totalLikes: postAcc.totalLikes + post.totalLikes,
+        totalReplies: postAcc.totalReplies + post.totalReplies,
+        totalUpvotes: postAcc.totalUpvotes + post.upvotes,
+        positive: postAcc.positive + post.positive,
+        negative: postAcc.negative + post.negative,
+        neutral: postAcc.neutral + post.neutral,
+      }), acc);
 
-    // Calculate aggregate stats
-    const stats = campaign.posts.reduce((acc, post) => ({
-      totalLikes: acc.totalLikes + post.totalLikes,
-      totalReplies: acc.totalReplies + post.totalReplies,
-      totalUpvotes: acc.totalUpvotes + post.upvotes,
-    }), { totalLikes: 0, totalReplies: 0, totalUpvotes: 0 });
+      return campaignStats;
+    }, {
+      totalLikes: 0,
+      totalReplies: 0,
+      totalUpvotes: 0,
+      positive: 0,
+      negative: 0,
+      neutral: 0
+    });
+
+    // Get engagement data for chart
+    const posts = campaigns.flatMap(c => c.posts);
+    const engagementData = posts
+      .sort((a, b) => new Date(a.timePosted).getTime() - new Date(b.timePosted).getTime())
+      .slice(-7) // Last 7 posts
+      .map(post => ({
+        date: post.timePosted,
+        value: post.totalLikes + post.totalReplies
+      }));
+
+    // Get recent activity
+    const recentPosts = posts
+      .sort((a, b) => new Date(b.timePosted).getTime() - new Date(a.timePosted).getTime())
+      .slice(0, 4)
+      .map(post => ({
+        id: post.id,
+        subreddit: post.subreddit,
+        upvotes: post.upvotes,
+        timePosted: post.timePosted,
+        postUrl: post.postUrl
+      }));
 
     res.json({
-      ...campaign,
       stats,
-      postCount: campaign.posts.length,
+      engagementData,
+      recentPosts,
+      activeCampaigns: campaigns.filter(c => c.status === 'active').length,
+      totalCampaigns: campaigns.length,
+      totalPosts: posts.length
     });
   } catch (error) {
-    console.error('Failed to fetch campaign details:', error);
-    res.status(500).json({ error: 'Failed to fetch campaign details' });
+    console.error('Failed to fetch dashboard data:', error);
+    res.status(500).json({ error: 'Failed to fetch dashboard data' });
   }
 });
+
+app.get('/api/campaigns/details/:id', async (req, res) => {
+    try {
+      const campaign = await prisma.campaign.findUnique({
+        where: { id: req.params.id },
+        include: {
+          posts: {
+            include: {
+              dailyStats: {
+                orderBy: { date: 'asc' }
+              }
+            },
+            orderBy: { timePosted: 'desc' }
+          }
+        }
+      });
+  
+      if (!campaign) {
+        return res.status(404).json({ error: 'Campaign not found' });
+      }
+  
+      // Aggregate daily stats across all posts
+      const dailyStats = campaign.posts.reduce((acc, post) => {
+        post.dailyStats.forEach(stat => {
+          const dateStr = format(stat.date, 'yyyy-MM-dd');
+          if (!acc[dateStr]) {
+            acc[dateStr] = {
+              date: stat.date,
+              engagements: 0,
+              parentEngagements: 0,
+              newPosts: 0
+            };
+          }
+          acc[dateStr].engagements += stat.engagements;
+          acc[dateStr].parentEngagements += stat.parentEngagements;
+          acc[dateStr].newPosts += stat.newPosts;
+        });
+        return acc;
+      }, {} as Record<string, any>);
+  
+      // Convert to array and sort by date
+      const dailyStatsArray = Object.values(dailyStats).sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+  
+      // Calculate aggregate stats
+      const stats = campaign.posts.reduce((acc, post) => ({
+        totalLikes: acc.totalLikes + post.totalLikes,
+        totalReplies: acc.totalReplies + post.totalReplies,
+        totalUpvotes: acc.totalUpvotes + post.upvotes,
+        positive: acc.positive + post.positive,
+        negative: acc.negative + post.negative,
+        neutral: acc.neutral + post.neutral,
+      }), { 
+        totalLikes: 0, 
+        totalReplies: 0, 
+        totalUpvotes: 0,
+        positive: 0,
+        negative: 0,
+        neutral: 0
+      });
+  
+      res.json({
+        ...campaign,
+        stats,
+        dailyStats: dailyStatsArray,
+        postCount: campaign.posts.length,
+      });
+    } catch (error) {
+      console.error('Failed to fetch campaign details:', error);
+      res.status(500).json({ error: 'Failed to fetch campaign details' });
+    }
+  });
+  
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);

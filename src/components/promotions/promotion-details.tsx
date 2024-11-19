@@ -1,42 +1,78 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
-import { ThumbsUp, MessageSquare, TrendingUp, ArrowUpCircle, Clock } from 'lucide-react';
+import { ThumbsUp, MessageSquare, TrendingUp, ArrowUpCircle, Clock, AlertTriangle } from 'lucide-react';
 import { PromotionBoostDialog } from './promotion-boost-dialog';
 import { useEffect, useState } from 'react';
-import { Campaign, getCampaignDetails } from '@/lib/api';
+import { Campaign, getCampaignDetails, updateCampaignStatus } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export function PromotionDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deactivating, setDeactivating] = useState(false);
 
   useEffect(() => {
-    async function loadCampaign() {
-      if (!id) return;
-
-      try {
-        const data = await getCampaignDetails(id);
-        setCampaign(data);
-      } catch (error) {
-        console.error('Failed to load campaign:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load campaign details. Please try again.",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    }
-
     loadCampaign();
   }, [id, toast]);
+
+  async function loadCampaign() {
+    if (!id) return;
+
+    try {
+      const data = await getCampaignDetails(id);
+      setCampaign(data);
+    } catch (error) {
+      console.error('Failed to load campaign:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load campaign details. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const handleDeactivate = async () => {
+    if (!campaign?.id) return;
+
+    try {
+      setDeactivating(true);
+      await updateCampaignStatus(campaign.id, 'inactive');
+      toast({
+        title: "Campaign deactivated",
+        description: "The campaign has been deactivated successfully."
+      });
+      loadCampaign();
+    } catch (error) {
+      console.error('Failed to deactivate campaign:', error);
+      toast({
+        title: "Error",
+        description: "Failed to deactivate campaign. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setDeactivating(false);
+    }
+  };
 
   if (loading) {
     return <div className="flex justify-center">Loading...</div>;
@@ -50,10 +86,12 @@ export function PromotionDetails() {
     );
   }
 
-  // Transform posts data for the chart
-  const engagementData = campaign.posts?.map(post => ({
-    date: format(new Date(post.timePosted), 'MM/dd'),
-    value: post.totalLikes + post.totalReplies
+  // Transform daily tracker data for the chart
+  const engagementData = campaign.dailyStats?.map(stat => ({
+    date: format(new Date(stat.date), 'MM/dd'),
+    engagements: stat.engagements,
+    parentEngagements: stat.parentEngagements,
+    newPosts: stat.newPosts
   })) || [];
 
   return (
@@ -70,7 +108,32 @@ export function PromotionDetails() {
         </div>
         <div className="flex gap-4">
           {campaign.status === 'active' && (
-            <PromotionBoostDialog promotionId={campaign.id} />
+            <>
+              <PromotionBoostDialog promotionId={campaign.id} />
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" disabled={deactivating}>
+                    <AlertTriangle className="mr-2 h-4 w-4" />
+                    {deactivating ? "Deactivating..." : "Deactivate Campaign"}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action will deactivate the campaign. All active promotions will be stopped.
+                      This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeactivate}>
+                      Continue
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
           )}
           <Button variant="outline">Export Report</Button>
         </div>
@@ -130,9 +193,17 @@ export function PromotionDetails() {
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={engagementData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
               <defs>
-                <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="engagements" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />
                   <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="parentEngagements" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#22c55e" stopOpacity={0.2} />
+                  <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="newPosts" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#eab308" stopOpacity={0.2} />
+                  <stop offset="100%" stopColor="#eab308" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis 
@@ -158,10 +229,27 @@ export function PromotionDetails() {
               />
               <Area
                 type="monotone"
-                dataKey="value"
+                dataKey="engagements"
                 stroke="hsl(var(--primary))"
-                fill="url(#gradient)"
+                fill="url(#engagements)"
                 strokeWidth={2}
+                name="Total Engagements"
+              />
+              <Area
+                type="monotone"
+                dataKey="parentEngagements"
+                stroke="#22c55e"
+                fill="url(#parentEngagements)"
+                strokeWidth={2}
+                name="Parent Post Engagements"
+              />
+              <Area
+                type="monotone"
+                dataKey="newPosts"
+                stroke="#eab308"
+                fill="url(#newPosts)"
+                strokeWidth={2}
+                name="New Posts"
               />
             </AreaChart>
           </ResponsiveContainer>
