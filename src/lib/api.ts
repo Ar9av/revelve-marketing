@@ -64,6 +64,14 @@ export interface CreateCampaignInput {
   userId: string;
 }
 
+export interface UpdateCampaignInput {
+  title: string;
+  description: string;
+  keywords: string[];
+  tone: number;
+  subreddits: string[];
+}
+
 export async function createCampaign(data: CreateCampaignInput): Promise<Campaign> {
   const response = await fetch(`${API_URL}/campaigns`, {
     method: 'POST',
@@ -91,6 +99,22 @@ export async function updateCampaignStatus(id: string, status: string): Promise<
 
   if (!response.ok) {
     throw new Error('Failed to update campaign status');
+  }
+
+  return response.json();
+}
+
+export async function updateCampaignDetails(id: string, data: UpdateCampaignInput): Promise<Campaign> {
+  const response = await fetch(`${API_URL}/campaigns/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to update campaign details');
   }
 
   return response.json();

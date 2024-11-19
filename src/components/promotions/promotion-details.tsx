@@ -9,6 +9,8 @@ import { useEffect, useState } from 'react';
 import { Campaign, getCampaignDetails, updateCampaignStatus } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { PromotionReactivateDialog } from './promotion-reactivate-dialog';
+import { PromotionEditDialog } from './promotion-edit-dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -107,36 +109,45 @@ export function PromotionDetails() {
           </div>
         </div>
         <div className="flex gap-4">
-          {campaign.status === 'active' && (
-            <>
-              <PromotionBoostDialog promotionId={campaign.id} />
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" disabled={deactivating}>
-                    <AlertTriangle className="mr-2 h-4 w-4" />
-                    {deactivating ? "Deactivating..." : "Deactivate Campaign"}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action will deactivate the campaign. All active promotions will be stopped.
-                      This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDeactivate}>
-                      Continue
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </>
-          )}
-          <Button variant="outline">Export Report</Button>
-        </div>
+            {campaign.status === 'active' ? (
+              <>
+                <PromotionBoostDialog promotionId={campaign.id} />
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" disabled={deactivating}>
+                      <AlertTriangle className="mr-2 h-4 w-4" />
+                      {deactivating ? "Deactivating..." : "Deactivate Campaign"}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action will deactivate the campaign. All active promotions will be stopped.
+                        This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDeactivate}>
+                        Continue
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
+            ) : (
+              <PromotionReactivateDialog 
+                campaignId={campaign.id} 
+                onReactivate={loadCampaign}
+              />
+            )}
+            <PromotionEditDialog 
+              campaign={campaign}
+              onUpdate={loadCampaign}
+            />
+            <Button variant="outline">Export Report</Button>
+          </div>
       </div>
 
       {/* Stats Overview */}
