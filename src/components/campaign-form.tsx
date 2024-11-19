@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useUser } from '@clerk/clerk-react';
@@ -9,14 +9,19 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
+import { Coins, Lock } from 'lucide-react';
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { createCampaign } from '@/lib/api';
+import { createCampaign, getUserCredits, deductCampaignCredits } from '@/lib/api';
+
+const CAMPAIGN_CREATION_COST = 100;
+const DAILY_COST = 5;
 
 interface FormData {
   title: string;
@@ -32,8 +37,25 @@ export function CampaignForm() {
   const [keywords, setKeywords] = useState<string[]>([]);
   const [keyword, setKeyword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [credits, setCredits] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
+
+  useEffect(() => {
+    async function loadCredits() {
+      if (!user) return;
+      try {
+        const response = await getUserCredits(user.id);
+        setCredits(response.totalCredits);
+      } catch (error) {
+        console.error('Failed to load credits:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadCredits();
+  }, [user]);
 
   const addKeyword = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && keyword.trim()) {
@@ -47,6 +69,8 @@ export function CampaignForm() {
     setKeywords(keywords.filter((_, i) => i !== index));
   };
 
+  const hasEnoughCredits = credits >= CAMPAIGN_CREATION_COST;
+
   const onSubmit = async (formData: FormData) => {
     if (!user) {
       toast({
@@ -57,10 +81,19 @@ export function CampaignForm() {
       return;
     }
 
+    if (!hasEnoughCredits) {
+      toast({
+        title: "Insufficient credits",
+        description: `You need ${CAMPAIGN_CREATION_COST} credits to create a campaign. Please top up your credits.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       setIsSubmitting(true);
 
-      await createCampaign({
+      const campaign = await createCampaign({
         title: formData.title,
         description: formData.description,
         keywords: keywords,
@@ -68,6 +101,9 @@ export function CampaignForm() {
         subreddits: formData.subreddits.split('\n').filter(s => s.trim()),
         userId: user.id
       });
+
+      // Deduct credits through API
+      await deductCampaignCredits(user.id, campaign.id, CAMPAIGN_CREATION_COST, 'new-campaign');
 
       toast({
         title: "Campaign created",
@@ -86,6 +122,10 @@ export function CampaignForm() {
       setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return <div className="flex justify-center">Loading...</div>;
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
@@ -172,11 +212,44 @@ export function CampaignForm() {
               <p className="text-sm text-destructive">{errors.subreddits.message}</p>
             )}
           </div>
-
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Creating Campaign..." : "Create Campaign"}
-          </Button>
         </CardContent>
+        <CardFooter className="flex-col space-y-4">
+          <div className="w-full p-4 rounded-lg bg-muted">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Coins className="h-4 w-4 text-primary" />
+                <span className="font-medium">Credit Requirements</span>
+              </div>
+              <span className="font-medium">{credits} credits available</span>
+            </div>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li className="flex justify-between">
+                <span>Campaign creation cost</span>
+                <span>{CAMPAIGN_CREATION_COST} credits</span>
+              </li>
+              <li className="flex justify-between">
+                <span>Daily maintenance cost</span>
+                <span>{DAILY_COST} credits</span>
+              </li>
+            </ul>
+          </div>
+
+          {!hasEnoughCredits ? (
+            <Button
+              type="button"
+              className="w-full"
+              variant="outline"
+              onClick={() => navigate('/credits')}
+            >
+              <Lock className="mr-2 h-4 w-4" />
+              Get More Credits to Start Campaign
+            </Button>
+          ) : (
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? "Creating Campaign..." : "Create Campaign"}
+            </Button>
+          )}
+        </CardFooter>
       </Card>
     </form>
   );

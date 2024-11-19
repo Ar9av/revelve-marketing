@@ -6,6 +6,7 @@ import {
   Coins,
   Menu,
   Rocket,
+  ListFilter,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -27,15 +28,15 @@ const menuItems = [
     href: '/campaigns/new',
   },
   {
+    title: 'View Promotions',
+    icon: ListFilter,
+    href: '/promotions',
+  },
+  {
     title: 'Credits',
     icon: Coins,
     href: '/credits',
   },
-  // {
-  //   title: 'Settings',
-  //   icon: Settings,
-  //   href: '/settings',
-  // },
 ];
 
 export function Sidebar() {
@@ -45,20 +46,28 @@ export function Sidebar() {
   const [credits, setCredits] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchCredits = async () => {
-      try {
-        const userCredits = await getUserCredits(user?.id || '');
-        setCredits(userCredits.totalCredits);
-      } catch (error) {
-        console.error('Failed to fetch user credits', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadCredits = async () => {
+    try {
+      const userCredits = await getUserCredits(user?.id || '');
+      setCredits(userCredits.totalCredits);
+    } catch (error) {
+      console.error('Failed to fetch user credits', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     if (user) {
-      fetchCredits();
+      loadCredits();
+    }
+  }, [user]);
+
+  // Set up an interval to refresh credits every minute
+  useEffect(() => {
+    if (user) {
+      const interval = setInterval(loadCredits, 60000);
+      return () => clearInterval(interval);
     }
   }, [user]);
 

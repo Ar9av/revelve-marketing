@@ -1,3 +1,6 @@
+import { Campaign, Credit } from '@prisma/client';
+
+
 const API_URL = 'http://localhost:3001/api';
 
 export interface Post {
@@ -86,6 +89,20 @@ export interface Credit {
   export interface CreditsResponse {
     credits: Credit[];
     totalCredits: number;
+  }
+
+export async function deductCampaignCredits(userId: string, campaignId: string, amount: number, type: string): Promise<void> {
+    const response = await fetch(`${API_URL}/credits/deduct`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId, campaignId, amount, type }),
+    });
+  
+    if (!response.ok) {
+      throw new Error('Failed to deduct credits');
+    }
   }
 
 export async function createCampaign(data: CreateCampaignInput): Promise<Campaign> {

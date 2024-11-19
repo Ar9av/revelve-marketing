@@ -369,3 +369,38 @@ app.get('/api/credits/:userId', async (req, res) => {
     }
   });
 
+  app.post('/api/credits/deduct', async (req, res) => {
+    try {
+      const { userId, campaignId, amount, type } = req.body;
+      
+      // Check current credits
+      const credits = await prisma.credit.findMany({
+        where: { userId }
+      });
+  
+      const totalCredits = credits.reduce((total, credit) => {
+        return total + (credit.expenseType === 'credit' ? credit.creditsValue : -credit.creditsValue);
+      }, 0);
+  
+      if (totalCredits < amount) {
+        return res.status(400).json({ error: 'Insufficient credits' });
+      }
+  
+      // Deduct credits
+      await prisma.credit.create({
+        data: {
+          userId,
+          promotionId: campaignId,
+          expenseType: 'debit',
+          creditsValue: amount,
+          type,
+          description: `${type} cost`
+        }
+      });
+  
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Failed to deduct credits:', error);
+      res.status(500).json({ error: 'Failed to deduct credits' });
+    }
+  });
