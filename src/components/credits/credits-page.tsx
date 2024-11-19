@@ -2,29 +2,80 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Coins, TrendingUp, Zap } from 'lucide-react';
-
-const creditPackages = [
-  {
-    name: 'Starter',
-    credits: 100,
-    price: 9.99,
-    features: ['Basic promotion boost', 'Standard targeting']
-  },
-  {
-    name: 'Pro',
-    credits: 500,
-    price: 39.99,
-    features: ['Advanced promotion boost', 'Geographic targeting', 'DM campaigns']
-  },
-  {
-    name: 'Enterprise',
-    credits: 2000,
-    price: 149.99,
-    features: ['Maximum promotion boost', 'Global targeting', 'Priority DM campaigns', 'Custom targeting']
-  }
-];
+import { useUser } from '@clerk/clerk-react';
+import { getUserCredits, claimCode } from '@/lib/api';
+import { format } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from 'react';
+import { cn } from '@/lib/utils';
+import { Credit } from '@prisma/client';
+import { Input } from '../ui/input';
 
 export function CreditsPage() {
+  const { user } = useUser();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [credits, setCredits] = useState<Credit[]>([]);
+  const [totalCredits, setTotalCredits] = useState(0);
+  const [claimCodeInput, setClaimCodeInput] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadCredits();
+  }, [user]);
+
+  async function loadCredits() {
+    if (!user) return;
+
+    try {
+      const data = await getUserCredits(user.id);
+      setCredits(data.credits);
+      setTotalCredits(data.totalCredits);
+    } catch (error) {
+      console.error('Failed to load credits:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load credits data. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const handleClaimCode = async () => {
+    if (!user || !claimCodeInput.trim()) return;
+
+    try {
+      setSubmitting(true);
+      const result = await claimCode(user.id, claimCodeInput.trim());
+      
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: `Successfully claimed ${result.credits} credits!`
+        });
+        loadCredits();
+        setClaimCodeInput('');
+      }
+    } catch (error) {
+      console.error('Failed to claim code:', error);
+      setErrorMessage("Invalid code or already claimed.");
+      toast({
+        title: "Error",
+        description: "Invalid code or already claimed.",
+        variant: "destructive"
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="flex justify-center">Loading...</div>;
+  }
+
   return (
     <div className="space-y-6">
       <h2 className="text-3xl font-bold tracking-tight">Credits Management</h2>
@@ -39,36 +90,45 @@ export function CreditsPage() {
             <div className="flex items-center gap-4">
               <Coins className="h-8 w-8 text-primary" />
               <div>
-                <p className="text-3xl font-bold">245</p>
+                <p className="text-3xl font-bold">{totalCredits}</p>
                 <p className="text-sm text-muted-foreground">credits remaining</p>
               </div>
             </div>
-            <Progress value={45} className="mt-4" />
-            <p className="text-sm text-muted-foreground mt-2">45% of credits used this month</p>
+            {totalCredits < 0 && (
+              <div className="mt-4 p-4 bg-destructive/10 rounded-lg">
+                <p className="text-sm text-destructive">
+                  Your account has insufficient credits. All promotions have been paused.
+                  Please top up your credits to resume your campaigns.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Usage History</CardTitle>
+            <CardTitle>Claim Code</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                  <span>Promotion Boost</span>
-                </div>
-                <span>-50 credits</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-muted-foreground" />
-                  <span>DM Campaign</span>
-                </div>
-                <span>-30 credits</span>
-              </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Enter claim code"
+                value={claimCodeInput}
+                onChange={(e) => {
+                  setClaimCodeInput(e.target.value);
+                  setErrorMessage(null);
+                }}
+              />
+              <Button onClick={handleClaimCode} disabled={submitting}>
+                {submitting ? "Claiming..." : "Claim"}
+              </Button>
             </div>
+            {errorMessage && (
+              <p className="text-sm text-destructive mt-2">{errorMessage}</p>
+            )}
+            <p className="text-sm text-muted-foreground mt-2">
+              Use code "REVELVEDUP" for 500 bonus credits!
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -103,6 +163,79 @@ export function CreditsPage() {
           </Card>
         ))}
       </div>
+
+      {/* Transaction History */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>Transaction History</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {credits.map((credit) => (
+              <div key={credit.id} className="flex items-center justify-between p-4 rounded-lg border">
+                <div>
+                  <p className="font-medium">
+                    {credit.description || getTransactionDescription(credit.type)}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {format(new Date(credit.createdAt), 'MMM d, yyyy h:mm a')}
+                  </p>
+                </div>
+                <p className={cn(
+                  "text-lg font-semibold",
+                  credit.expenseType === 'credit' ? 'text-green-500' : 'text-red-500'
+                )}>
+                  {credit.expenseType === 'credit' ? '+' : '-'}{credit.creditsValue}
+                </p>
+              </div>
+            ))}
+
+            {credits.length === 0 && (
+              <p className="text-center text-muted-foreground py-4">
+                No transactions yet.
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
+
+function getTransactionDescription(type: string): string {
+  switch (type) {
+    case 'new-login':
+      return 'Welcome bonus';
+    case 'new-promotion':
+      return 'New campaign created';
+    case 'superboost':
+      return 'Campaign super boost';
+    case 'topup':
+      return 'Credits top up';
+    case 'claim-code':
+      return 'Promo code redemption';
+    default:
+      return 'Transaction';
+  }
+}
+
+const creditPackages = [
+  {
+    name: 'Starter',
+    credits: 1000,
+    price: 9.99,
+    features: ['Basic promotion boost', 'Standard targeting']
+  },
+  {
+    name: 'Pro',
+    credits: 5000,
+    price: 39.99,
+    features: ['Advanced promotion boost', 'Geographic targeting', 'DM campaigns']
+  },
+  {
+    name: 'Enterprise',
+    credits: 20000,
+    price: 149.99,
+    features: ['Maximum promotion boost', 'Global targeting', 'Priority DM campaigns', 'Custom targeting']
+  }
+];
