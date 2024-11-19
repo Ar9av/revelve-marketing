@@ -72,6 +72,22 @@ export interface UpdateCampaignInput {
   subreddits: string[];
 }
 
+export interface Credit {
+    id: string;
+    createdAt: string;
+    userId: string;
+    promotionId?: string;
+    expenseType: string;
+    creditsValue: number;
+    type: string;
+    description?: string;
+  }
+  
+  export interface CreditsResponse {
+    credits: Credit[];
+    totalCredits: number;
+  }
+
 export async function createCampaign(data: CreateCampaignInput): Promise<Campaign> {
   const response = await fetch(`${API_URL}/campaigns`, {
     method: 'POST',
@@ -87,6 +103,48 @@ export async function createCampaign(data: CreateCampaignInput): Promise<Campaig
 
   return response.json();
 }
+
+export async function getUserCredits(userId: string): Promise<CreditsResponse> {
+    const response = await fetch(`${API_URL}/credits/${userId}`);
+  
+    if (!response.ok) {
+      throw new Error('Failed to fetch credits');
+    }
+  
+    return response.json();
+  }
+
+  export async function claimCode(userId: string, code: string): Promise<{ success: boolean; credits?: number }> {
+    const response = await fetch(`${API_URL}/credits/claim`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId, code }),
+    });
+  
+    if (!response.ok) {
+      throw new Error('Failed to claim code');
+    }
+  
+    return response.json();
+  }
+
+  export async function checkNewUser(userId: string): Promise<{ isNewUser: boolean; credits?: number }> {
+    const response = await fetch(`${API_URL}/credits/check-new-user`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId }),
+    });
+  
+    if (!response.ok) {
+      throw new Error('Failed to check new user');
+    }
+  
+    return response.json();
+  }
 
 export async function updateCampaignStatus(id: string, status: string): Promise<Campaign> {
   const response = await fetch(`${API_URL}/campaigns/${id}/status`, {

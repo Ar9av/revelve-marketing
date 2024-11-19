@@ -4,15 +4,16 @@ import {
   LayoutDashboard,
   PlusCircle,
   Coins,
-  // Settings,
   Menu,
+  Rocket,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Progress } from '@/components/ui/progress';
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Rocket } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { getUserCredits } from '@/lib/api';
+import { useUser } from '@clerk/clerk-react';
 
 const menuItems = [
   {
@@ -40,17 +41,37 @@ const menuItems = [
 export function Sidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const navigate = useNavigate();
+  const { user } = useUser();
+  const [credits, setCredits] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCredits = async () => {
+      try {
+        const userCredits = await getUserCredits(user?.id || '');
+        setCredits(userCredits.totalCredits);
+      } catch (error) {
+        console.error('Failed to fetch user credits', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchCredits();
+    }
+  }, [user]);
 
   const NavContent = () => (
     <div className="flex flex-col h-full">
       <div className="flex-1 space-y-4 py-4">
         <div className="px-3 py-2">
           <div className="flex items-center gap-2 mb-4">
-          <Link to="/" className="flex items-center gap-2 cursor-pointer">
-            <Rocket className="h-6 w-6" />
-            <h1 className="text-xl font-bold">Revelve</h1>
-          </Link>
-        </div>
+            <Link to="/" className="flex items-center gap-2 cursor-pointer">
+              <Rocket className="h-6 w-6" />
+              <h1 className="text-xl font-bold">Revelve</h1>
+            </Link>
+          </div>
           <div className="space-y-1">
             {menuItems.map((item) => (
               <NavLink
@@ -76,7 +97,9 @@ export function Sidebar() {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Coins className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium">245 credits</span>
+            <span className="text-sm font-medium">
+              {loading ? "Loading..." : `${credits} credits`}
+            </span>
           </div>
           <Button 
             variant="ghost" 
@@ -87,8 +110,10 @@ export function Sidebar() {
             <PlusCircle className="h-4 w-4" />
           </Button>
         </div>
-        <Progress value={45} className="h-1" />
-        <p className="text-xs text-muted-foreground mt-1">45% used this month</p>
+        <Progress value={Math.max(0, Math.min(100, (credits / 1000) * 100))} className="h-1" />
+        <p className="text-xs text-muted-foreground mt-1">
+          {credits < 5 ? "Insufficient credits" : `${Math.round((credits / 1000) * 100)}% of 1000 credits`}
+        </p>
       </div>
     </div>
   );
