@@ -18,4 +18,20 @@ model Campaign {
   subreddits  String[]
   status      String   @default("active")
   userId      String
+  posts       Post[]
+}
+
+model Post {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  timePosted   DateTime
+  postUrl      String
+  totalLikes   Int      @default(0)
+  totalReplies Int      @default(0)
+  upvotes      Int      @default(0)
+  subreddit    String
+  data         Json?
+  campaign     Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaignId   String
 }

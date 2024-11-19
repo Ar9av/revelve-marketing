@@ -5,85 +5,44 @@ import { Badge } from '@/components/ui/badge';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
 import { ThumbsUp, MessageSquare, TrendingUp, ArrowUpCircle, Clock } from 'lucide-react';
 import { PromotionBoostDialog } from './promotion-boost-dialog';
-
-const mockEngagementData = [
-  { date: '03/01', value: 120 },
-  { date: '03/02', value: 150 },
-  { date: '03/03', value: 180 },
-  { date: '03/04', value: 250 },
-  { date: '03/05', value: 280 },
-  { date: '03/06', value: 300 },
-  { date: '03/07', value: 280 },
-];
-
-const mockComments = [
-  {
-    id: 1,
-    author: 'techEnthusiast',
-    content: 'This looks really promising! How does it handle concurrent requests?',
-    upvotes: 15,
-    time: '2 hours ago'
-  },
-  {
-    id: 2,
-    author: 'devGuru',
-    content: 'Great implementation. The documentation is very clear.',
-    upvotes: 12,
-    time: '3 hours ago'
-  },
-  {
-    id: 3,
-    author: 'codeReviewer',
-    content: 'The performance improvements are impressive.',
-    upvotes: 8,
-    time: '5 hours ago'
-  }
-];
-
-const mockPromotions = {
-  '1': {
-    id: '1',
-    title: 'New Developer Tool Launch',
-    subreddit: 'r/programming',
-    status: 'active',
-    stats: {
-      upvotes: 245,
-      comments: 32,
-      engagement: '24.3%'
-    },
-    lastActive: '2 hours ago'
-  },
-  '2': {
-    id: '2',
-    title: 'AI Platform Release',
-    subreddit: 'r/artificial',
-    status: 'active',
-    stats: {
-      upvotes: 189,
-      comments: 28,
-      engagement: '18.7%'
-    },
-    lastActive: '5 hours ago'
-  },
-  '3': {
-    id: '3',
-    title: 'Mobile App Launch',
-    subreddit: 'r/androiddev',
-    status: 'completed',
-    stats: {
-      upvotes: 567,
-      comments: 89,
-      engagement: '32.1%'
-    },
-    lastActive: '2 days ago'
-  }
-};
+import { useEffect, useState } from 'react';
+import { Campaign, getCampaignDetails } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
 
 export function PromotionDetails() {
   const { id } = useParams();
-  const promotion = id ? mockPromotions[id as keyof typeof mockPromotions] : null;
+  const { toast } = useToast();
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!promotion) {
+  useEffect(() => {
+    async function loadCampaign() {
+      if (!id) return;
+
+      try {
+        const data = await getCampaignDetails(id);
+        setCampaign(data);
+      } catch (error) {
+        console.error('Failed to load campaign:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load campaign details. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadCampaign();
+  }, [id, toast]);
+
+  if (loading) {
+    return <div className="flex justify-center">Loading...</div>;
+  }
+
+  if (!campaign) {
     return (
       <div className="flex items-center justify-center h-[50vh]">
         <p className="text-muted-foreground">Promotion not found</p>
@@ -91,21 +50,27 @@ export function PromotionDetails() {
     );
   }
 
+  // Transform posts data for the chart
+  const engagementData = campaign.posts?.map(post => ({
+    date: format(new Date(post.timePosted), 'MM/dd'),
+    value: post.totalLikes + post.totalReplies
+  })) || [];
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight mb-2">{promotion.title}</h2>
+          <h2 className="text-3xl font-bold tracking-tight mb-2">{campaign.title}</h2>
           <div className="flex items-center gap-4">
-            <p className="text-muted-foreground">{promotion.subreddit}</p>
-            <Badge variant={promotion.status === 'active' ? 'default' : 'secondary'}>
-              {promotion.status}
+            <p className="text-muted-foreground">{campaign.subreddits.join(', ')}</p>
+            <Badge variant={campaign.status === 'active' ? 'default' : 'secondary'}>
+              {campaign.status}
             </Badge>
           </div>
         </div>
         <div className="flex gap-4">
-          {promotion.status === 'active' && (
-            <PromotionBoostDialog promotionId={promotion.id} />
+          {campaign.status === 'active' && (
+            <PromotionBoostDialog promotionId={campaign.id} />
           )}
           <Button variant="outline">Export Report</Button>
         </div>
@@ -122,8 +87,8 @@ export function PromotionDetails() {
               </div>
               <ArrowUpCircle className="h-4 w-4 text-green-500" />
             </div>
-            <p className="text-2xl font-bold mt-2">{promotion.stats.upvotes}</p>
-            <p className="text-xs text-muted-foreground">+12% from last week</p>
+            <p className="text-2xl font-bold mt-2">{campaign.stats?.totalUpvotes || 0}</p>
+            <p className="text-xs text-muted-foreground">Across all posts</p>
           </CardContent>
         </Card>
 
@@ -132,12 +97,12 @@ export function PromotionDetails() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm font-medium">Comments</p>
+                <p className="text-sm font-medium">Total Comments</p>
               </div>
               <ArrowUpCircle className="h-4 w-4 text-green-500" />
             </div>
-            <p className="text-2xl font-bold mt-2">{promotion.stats.comments}</p>
-            <p className="text-xs text-muted-foreground">+5% from last week</p>
+            <p className="text-2xl font-bold mt-2">{campaign.stats?.totalReplies || 0}</p>
+            <p className="text-xs text-muted-foreground">Across all posts</p>
           </CardContent>
         </Card>
 
@@ -146,12 +111,12 @@ export function PromotionDetails() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm font-medium">Engagement Rate</p>
+                <p className="text-sm font-medium">Total Posts</p>
               </div>
               <ArrowUpCircle className="h-4 w-4 text-green-500" />
             </div>
-            <p className="text-2xl font-bold mt-2">{promotion.stats.engagement}</p>
-            <p className="text-xs text-muted-foreground">+2.4% from last week</p>
+            <p className="text-2xl font-bold mt-2">{campaign.postCount || 0}</p>
+            <p className="text-xs text-muted-foreground">Active promotions</p>
           </CardContent>
         </Card>
       </div>
@@ -163,7 +128,7 @@ export function PromotionDetails() {
         </CardHeader>
         <CardContent className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={mockEngagementData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+            <AreaChart data={engagementData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />
@@ -203,31 +168,47 @@ export function PromotionDetails() {
         </CardContent>
       </Card>
 
-      {/* Recent Comments */}
+      {/* Posts List */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Comments</CardTitle>
+          <CardTitle>Recent Posts</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {mockComments.map((comment) => (
-              <div key={comment.id} className="p-4 rounded-lg border">
+            {campaign.posts?.map((post) => (
+              <div key={post.id} className="p-4 rounded-lg border">
                 <div className="flex justify-between items-start mb-2">
-                  <p className="font-medium">{comment.author}</p>
+                  <a 
+                    href={post.postUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="font-medium hover:underline"
+                  >
+                    r/{post.subreddit}
+                  </a>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       <Clock className="h-4 w-4" />
-                      {comment.time}
+                      {format(new Date(post.timePosted), 'MMM d, yyyy')}
                     </div>
                     <div className="flex items-center gap-1">
                       <ThumbsUp className="h-4 w-4" />
-                      <span className="text-sm">{comment.upvotes}</span>
+                      <span className="text-sm">{post.upvotes}</span>
                     </div>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground">{comment.content}</p>
+                <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
+                  <span>{post.totalLikes} likes</span>
+                  <span>{post.totalReplies} replies</span>
+                </div>
               </div>
             ))}
+
+            {(!campaign.posts || campaign.posts.length === 0) && (
+              <p className="text-center text-muted-foreground py-4">
+                No posts yet for this campaign.
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>

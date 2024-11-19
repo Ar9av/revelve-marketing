@@ -3,48 +3,43 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { TrendingUp, MessageSquare, ThumbsUp, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-
-const mockPromotions = [
-  {
-    id: '1',
-    title: 'New Developer Tool Launch',
-    subreddit: 'r/programming',
-    status: 'active',
-    stats: {
-      upvotes: 245,
-      comments: 32,
-      engagement: '24.3%'
-    },
-    lastActive: '2 hours ago'
-  },
-  {
-    id: '2',
-    title: 'AI Platform Release',
-    subreddit: 'r/artificial',
-    status: 'active',
-    stats: {
-      upvotes: 189,
-      comments: 28,
-      engagement: '18.7%'
-    },
-    lastActive: '5 hours ago'
-  },
-  {
-    id: '3',
-    title: 'Mobile App Launch',
-    subreddit: 'r/androiddev',
-    status: 'completed',
-    stats: {
-      upvotes: 567,
-      comments: 89,
-      engagement: '32.1%'
-    },
-    lastActive: '2 days ago'
-  }
-];
+import { useEffect, useState } from 'react';
+import { useUser } from '@clerk/clerk-react';
+import { Campaign, getCampaigns } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 export function PromotionsList() {
   const navigate = useNavigate();
+  const { user } = useUser();
+  const { toast } = useToast();
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadCampaigns() {
+      if (!user) return;
+      
+      try {
+        const data = await getCampaigns(user.id);
+        setCampaigns(data);
+      } catch (error) {
+        console.error('Failed to load campaigns:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load campaigns. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadCampaigns();
+  }, [user, toast]);
+
+  if (loading) {
+    return <div className="flex justify-center">Loading...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -54,41 +49,51 @@ export function PromotionsList() {
       </div>
 
       <div className="grid gap-4">
-        {mockPromotions.map((promotion) => (
-          <Card key={promotion.id} className="hover:bg-muted/50 transition-colors">
+        {campaigns.map((campaign) => (
+          <Card key={campaign.id} className="hover:bg-muted/50 transition-colors">
             <CardContent className="flex items-center gap-4 pt-6">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <h3 className="font-semibold">{promotion.title}</h3>
-                  <Badge variant={promotion.status === 'active' ? 'default' : 'secondary'}>
-                    {promotion.status}
+                  <h3 className="font-semibold">{campaign.title}</h3>
+                  <Badge variant={campaign.status === 'active' ? 'default' : 'secondary'}>
+                    {campaign.status}
                   </Badge>
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">{promotion.subreddit}</p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {campaign.subreddits.join(', ')}
+                </p>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="flex items-center gap-2">
                     <ThumbsUp className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{promotion.stats.upvotes} upvotes</span>
+                    <span className="text-sm">{campaign.stats?.totalUpvotes || 0} upvotes</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{promotion.stats.comments} comments</span>
+                    <span className="text-sm">{campaign.stats?.totalReplies || 0} comments</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{promotion.stats.engagement} engagement</span>
+                    <span className="text-sm">{campaign.postCount || 0} posts</span>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <p className="text-sm text-muted-foreground">{promotion.lastActive}</p>
-                <Button variant="ghost" size="icon" onClick={() => navigate(`/promotions/${promotion.id}`)}>
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </div>
+              <Button variant="ghost" size="icon" onClick={() => navigate(`/promotions/${campaign.id}`)}>
+                <ArrowRight className="h-4 w-4" />
+              </Button>
             </CardContent>
           </Card>
         ))}
+
+        {campaigns.length === 0 && (
+          <Card>
+            <CardContent className="py-8 text-center">
+              <p className="text-muted-foreground">No promotions found. Create your first promotion to get started!</p>
+              <Button onClick={() => navigate('/campaigns/new')} className="mt-4">
+                Create Promotion
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
