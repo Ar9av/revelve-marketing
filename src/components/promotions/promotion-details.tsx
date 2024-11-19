@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams} from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,7 +25,6 @@ import {
 
 export function PromotionDetails() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);
@@ -89,7 +88,7 @@ export function PromotionDetails() {
   }
 
   // Transform daily tracker data for the chart
-  const engagementData = campaign.dailyStats?.map(stat => ({
+  const engagementData = campaign.dailyStats?.map((stat: any) => ({
     date: format(new Date(stat.date), 'MM/dd'),
     engagements: stat.engagements,
     parentEngagements: stat.parentEngagements,

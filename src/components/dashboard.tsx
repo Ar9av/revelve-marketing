@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/clerk-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Activity, Target, MessageSquare, TrendingUp, ThumbsUp, BarChart3, PlusCircle, ListFilter } from 'lucide-react';
+import { Activity, Target, MessageSquare, TrendingUp, ThumbsUp, PlusCircle, ListFilter } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';

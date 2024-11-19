@@ -1,21 +1,30 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Coins, TrendingUp, Zap } from 'lucide-react';
+import { Coins } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { getUserCredits, claimCode } from '@/lib/api';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { Credit } from '@prisma/client';
 import { Input } from '../ui/input';
+
+interface CustomCredit {
+  type: string;
+  id: string;
+  description: string | null;
+  promotionId: string | null;
+  createdAt: Date;
+  userId: string;
+  expenseType: string;
+  creditsValue: number;
+}
 
 export function CreditsPage() {
   const { user } = useUser();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [credits, setCredits] = useState<Credit[]>([]);
+  const [credits, setCredits] = useState<CustomCredit[]>([]);
   const [totalCredits, setTotalCredits] = useState(0);
   const [claimCodeInput, setClaimCodeInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -30,7 +39,11 @@ export function CreditsPage() {
 
     try {
       const data = await getUserCredits(user.id);
-      setCredits(data.credits);
+      const transformedCredits = data.credits.map((credit: any): CustomCredit => ({
+        ...credit,
+        description: credit.description ?? null,
+      }));
+      setCredits(transformedCredits);
       setTotalCredits(data.totalCredits);
     } catch (error) {
       console.error('Failed to load credits:', error);
@@ -50,7 +63,7 @@ export function CreditsPage() {
     try {
       setSubmitting(true);
       const result = await claimCode(user.id, claimCodeInput.trim());
-      
+
       if (result.success) {
         toast({
           title: "Success",

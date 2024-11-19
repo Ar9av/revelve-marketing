@@ -5,7 +5,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,10 +19,10 @@ import {
 } from '@/components/ui/select';
 import { Coins, Lock, Zap } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { getUserCredits, deductCampaignCredits } from '@/lib/api';
 import { useUser } from '@clerk/clerk-react';
-import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { getUserCredits, activateSuperboost, deductCampaignCredits } from '@/lib/api';
+import { useNavigate } from 'react-router-dom';
 
 const BOOST_COST = 50;
 
@@ -34,30 +33,29 @@ interface PromotionBoostDialogProps {
 
 export function PromotionBoostDialog({ promotionId, onBoostComplete }: PromotionBoostDialogProps) {
   const { user } = useUser();
-  const navigate = useNavigate();
   const { toast } = useToast();
-  const [credits, setCredits] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [credits, setCredits] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [boostType, setBoostType] = useState('');
   const [regions, setRegions] = useState('');
   const [messageTemplate, setMessageTemplate] = useState('');
   const [dailyLimit, setDailyLimit] = useState('50');
 
-  const loadCredits = async () => {
-    if (!user) return;
-    try {
-      const response = await getUserCredits(user.id);
-      setCredits(response.totalCredits);
-    } catch (error) {
-      console.error('Failed to load credits:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    async function loadCredits() {
+      if (!user) return;
+      try {
+        const response = await getUserCredits(user.id);
+        setCredits(response.totalCredits);
+      } catch (error) {
+        console.error('Failed to load credits:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
     loadCredits();
   }, [user]);
 
@@ -76,16 +74,24 @@ export function PromotionBoostDialog({ promotionId, onBoostComplete }: Promotion
     try {
       setIsSubmitting(true);
       
-      // Deduct credits through API
+      // Prepare superboost parameters
+      const superboostParams = {
+        type: boostType,
+        regions: [regions],
+        messageTemplate: messageTemplate || undefined,
+        dailyLimit: parseInt(dailyLimit) || undefined
+      };
+
+      // Update campaign with superboost status
+      await activateSuperboost(promotionId, superboostParams);
+      
+      // Deduct credits
       await deductCampaignCredits(user.id, promotionId, BOOST_COST, 'superboost');
       
       toast({
         title: "Boost activated",
         description: "Your campaign boost has been activated successfully"
       });
-      
-      // Refresh credits in sidebar
-      loadCredits();
       
       // Notify parent component
       if (onBoostComplete) {
@@ -106,12 +112,7 @@ export function PromotionBoostDialog({ promotionId, onBoostComplete }: Promotion
   };
 
   if (loading) {
-    return (
-      <Button variant="outline" disabled className="gap-2">
-        <Zap className="h-4 w-4" />
-        Loading...
-      </Button>
-    );
+    return <div>Loading...</div>;
   }
 
   return (
@@ -138,9 +139,9 @@ export function PromotionBoostDialog({ promotionId, onBoostComplete }: Promotion
                 <SelectValue placeholder="Select boost type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="geographic">Geographic Expansion</SelectItem>
-                <SelectItem value="dm">DM Campaign</SelectItem>
-                <SelectItem value="both">Combined Boost</SelectItem>
+                <SelectItem value="geographic">Geographic Expansion (50 credits)</SelectItem>
+                <SelectItem value="dm">DM Campaign (100 credits)</SelectItem>
+                <SelectItem value="both">Combined Boost (140 credits)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -163,10 +164,10 @@ export function PromotionBoostDialog({ promotionId, onBoostComplete }: Promotion
           <div className="space-y-2">
             <Label>DM Message Template</Label>
             <Textarea 
-              placeholder="Hi! Saw that you might be interested in our product..."
-              className="h-[100px]"
               value={messageTemplate}
               onChange={(e) => setMessageTemplate(e.target.value)}
+              placeholder="Hi! Saw that you might be interested in our product..."
+              className="h-[100px]"
             />
           </div>
 
@@ -174,9 +175,9 @@ export function PromotionBoostDialog({ promotionId, onBoostComplete }: Promotion
             <Label>Daily Message Limit</Label>
             <Input 
               type="number" 
-              placeholder="50" 
               value={dailyLimit}
               onChange={(e) => setDailyLimit(e.target.value)}
+              placeholder="50" 
             />
           </div>
 
@@ -188,34 +189,30 @@ export function PromotionBoostDialog({ promotionId, onBoostComplete }: Promotion
               </div>
               <span className="font-medium">{credits}</span>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground">
               Boost cost: {BOOST_COST} credits
-            </p>
+            </div>
           </div>
         </div>
-        <DialogFooter>
+        <div className="flex justify-end gap-4">
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
           {!hasEnoughCredits ? (
             <Button
               variant="outline"
-              className="w-full"
-              onClick={() => {
-                setOpen(false);
-                navigate('/credits');
-              }}
+              onClick={() => navigate('/credits')}
+              className="gap-2"
             >
-              <Lock className="mr-2 h-4 w-4" />
-              Get More Credits to Boost
+              <Lock className="h-4 w-4" />
+              Get More Credits
             </Button>
           ) : (
-            <Button 
-              className="w-full" 
-              onClick={handleBoost}
-              disabled={isSubmitting || !boostType || !regions}
-            >
-              {isSubmitting ? "Activating Boost..." : "Activate Boost"}
+            <Button onClick={handleBoost} disabled={isSubmitting || !boostType || !regions}>
+              {isSubmitting ? "Activating..." : "Activate Boost"}
             </Button>
           )}
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

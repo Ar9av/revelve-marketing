@@ -8,17 +8,19 @@ datasource db {
 }
 
 model Campaign {
-  id          String   @id @default(cuid())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  title       String
-  description String
-  keywords    String[]
-  tone        Int
-  subreddits  String[]
-  status      String   @default("active")
-  userId      String
-  posts       Post[]
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  title           String
+  description     String
+  keywords        String[]
+  tone           Int
+  subreddits     String[]
+  status         String   @default("active")
+  userId         String
+  superboost     Boolean  @default(false)
+  superboostParams Json?
+  posts          Post[]
 }
 
 model Post {
