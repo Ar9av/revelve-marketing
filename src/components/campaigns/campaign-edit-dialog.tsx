@@ -17,12 +17,12 @@ import {
   import { Campaign, updateCampaignDetails } from '@/lib/api';
   import { useToast } from '@/hooks/use-toast';
   
-  interface PromotionEditDialogProps {
+  interface CampaignEditDialogProps {
     campaign: Campaign;
     onUpdate: () => void;
   }
   
-  export function PromotionEditDialog({ campaign, onUpdate }: PromotionEditDialogProps) {
+  export function CampaignEditDialog({ campaign, onUpdate }: CampaignEditDialogProps) {
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,7 +31,7 @@ import {
     const [keywords, setKeywords] = useState<string[]>(campaign.keywords);
     const [keyword, setKeyword] = useState('');
     const [tone, setTone] = useState(campaign.tone);
-    const [subreddits, setSubreddits] = useState(campaign.subreddits.join('\n'));
+    const [links, setLinks] = useState(campaign.links.join('\n'));
   
     const addKeyword = (e: React.KeyboardEvent) => {
       if (e.key === 'Enter' && keyword.trim()) {
@@ -53,7 +53,7 @@ import {
           description,
           keywords,
           tone,
-          subreddits: subreddits.split('\n').filter(s => s.trim()),
+          links: links.split('\n').filter(s => s.trim()),
         });
   
         toast({
@@ -152,12 +152,12 @@ import {
             </div>
   
             <div className="space-y-2">
-              <Label htmlFor="subreddits">Target Subreddits</Label>
+              <Label htmlFor="links">Links for context</Label>
               <Textarea
-                id="subreddits"
-                value={subreddits}
-                onChange={(e) => setSubreddits(e.target.value)}
-                placeholder="Enter target subreddits (one per line)"
+                id="links"
+                value={links}
+                onChange={(e) => setLinks(e.target.value)}
+                placeholder="Enter target links (one per line)"
                 className="min-h-[100px]"
               />
             </div>

@@ -13,7 +13,7 @@ interface CustomCredit {
   type: string;
   id: string;
   description: string | null;
-  promotionId: string | null;
+  campaignId: string | null;
   createdAt: Date;
   userId: string;
   expenseType: string;
@@ -110,7 +110,7 @@ export function CreditsPage() {
             {totalCredits < 0 && (
               <div className="mt-4 p-4 bg-destructive/10 rounded-lg">
                 <p className="text-sm text-destructive">
-                  Your account has insufficient credits. All promotions have been paused.
+                  Your account has insufficient credits. All campaigns have been paused.
                   Please top up your credits to resume your campaigns.
                 </p>
               </div>
@@ -219,7 +219,7 @@ function getTransactionDescription(type: string): string {
   switch (type) {
     case 'new-login':
       return 'Welcome bonus';
-    case 'new-promotion':
+    case 'new-campaign':
       return 'New campaign created';
     case 'superboost':
       return 'Campaign super boost';
@@ -237,18 +237,18 @@ const creditPackages = [
     name: 'Starter',
     credits: 1000,
     price: 9.99,
-    features: ['Basic promotion boost', 'Standard targeting']
+    features: ['Basic campaign boost', 'Standard targeting']
   },
   {
     name: 'Pro',
     credits: 5000,
     price: 39.99,
-    features: ['Advanced promotion boost', 'Geographic targeting', 'DM campaigns']
+    features: ['Advanced campaign boost', 'Geographic targeting', 'DM campaigns']
   },
   {
     name: 'Enterprise',
     credits: 20000,
     price: 149.99,
-    features: ['Maximum promotion boost', 'Global targeting', 'Priority DM campaigns', 'Custom targeting']
+    features: ['Maximum campaign boost', 'Global targeting', 'Priority DM campaigns', 'Custom targeting']
   }
 ];

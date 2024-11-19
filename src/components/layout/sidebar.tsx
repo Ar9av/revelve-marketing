@@ -28,9 +28,9 @@ const menuItems = [
     href: '/campaigns/new',
   },
   {
-    title: 'View Promotions',
+    title: 'View Campaigns',
     icon: ListFilter,
-    href: '/promotions',
+    href: '/campaigns',
   },
   {
     title: 'Credits',

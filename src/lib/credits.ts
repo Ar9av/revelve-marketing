@@ -14,13 +14,13 @@ export async function addCredits(
   userId: string, 
   creditsValue: number, 
   type: string, 
-  promotionId?: string,
+  campaignId?: string,
   description?: string
 ) {
   return prisma.credit.create({
     data: {
       userId,
-      promotionId,
+      campaignId,
       expenseType: 'credit',
       creditsValue,
       type,
@@ -33,7 +33,7 @@ export async function deductCredits(
   userId: string, 
   creditsValue: number, 
   type: string, 
-  promotionId?: string,
+  campaignId?: string,
   description?: string
 ) {
   const currentCredits = await getUserCredits(userId);
@@ -45,7 +45,7 @@ export async function deductCredits(
   return prisma.credit.create({
     data: {
       userId,
-      promotionId,
+      campaignId,
       expenseType: 'debit',
       creditsValue,
       type,

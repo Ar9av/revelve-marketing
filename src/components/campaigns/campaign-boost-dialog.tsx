@@ -26,12 +26,12 @@ import { useNavigate } from 'react-router-dom';
 
 const BOOST_COST = 50;
 
-interface PromotionBoostDialogProps {
-  promotionId: string;
+interface CampaignBoostDialogProps {
+  campaignId: string;
   onBoostComplete?: () => void;
 }
 
-export function PromotionBoostDialog({ promotionId, onBoostComplete }: PromotionBoostDialogProps) {
+export function CampaignBoostDialog({ campaignId, onBoostComplete }: CampaignBoostDialogProps) {
   const { user } = useUser();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -83,10 +83,10 @@ export function PromotionBoostDialog({ promotionId, onBoostComplete }: Promotion
       };
 
       // Update campaign with superboost status
-      await activateSuperboost(promotionId, superboostParams);
+      await activateSuperboost(campaignId, superboostParams);
       
       // Deduct credits
-      await deductCampaignCredits(user.id, promotionId, BOOST_COST, 'superboost');
+      await deductCampaignCredits(user.id, campaignId, BOOST_COST, 'superboost');
       
       toast({
         title: "Boost activated",
@@ -125,9 +125,9 @@ export function PromotionBoostDialog({ promotionId, onBoostComplete }: Promotion
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Super Boost Promotion</DialogTitle>
+          <DialogTitle>Super Boost Campaign</DialogTitle>
           <DialogDescription>
-            Enhance your promotion's reach with additional targeting options.
+            Enhance your campaign's reach with additional targeting options.
             This will consume {BOOST_COST} credits from your account.
           </DialogDescription>
         </DialogHeader>

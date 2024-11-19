@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
-import { Coins, Lock } from 'lucide-react';
+import { Coins, Lock, ChevronDown, ChevronUp } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -26,7 +26,7 @@ const DAILY_COST = 5;
 interface FormData {
   title: string;
   description: string;
-  subreddits: string;
+  links: string;
 }
 
 export function CampaignForm() {
@@ -39,6 +39,7 @@ export function CampaignForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [credits, setCredits] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
 
@@ -98,7 +99,7 @@ export function CampaignForm() {
         description: formData.description,
         keywords: keywords,
         tone: tone,
-        subreddits: formData.subreddits.split('\n').filter(s => s.trim()),
+        links: formData.links.split('\n').filter(s => s.trim()),
         userId: user.id
       });
 
@@ -131,7 +132,7 @@ export function CampaignForm() {
     <form onSubmit={handleSubmit(onSubmit)}>
       <Card className="w-full max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle>Create Promotion Campaign</CardTitle>
+          <CardTitle>Create Campaign</CardTitle>
           <CardDescription>
             Set up your Reddit marketing campaign with natural, human-like responses
           </CardDescription>
@@ -155,61 +156,72 @@ export function CampaignForm() {
               id="description"
               {...register("description", { required: "Description is required" })}
               placeholder="Describe your campaign's key features and benefits"
-              className="min-h-[100px]"
+              className="min-h-[200px]"
             />
             {errors.description && (
               <p className="text-sm text-destructive">{errors.description.message}</p>
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label>Target Keywords</Label>
-            <div className="flex gap-2 flex-wrap mb-2">
-              {keywords.map((kw, i) => (
-                <Badge
-                  key={i}
-                  variant="secondary"
-                  className="cursor-pointer"
-                  onClick={() => removeKeyword(i)}
-                >
-                  {kw} ×
-                </Badge>
-              ))}
+          <div className="space-y-6">
+            <div className="flex items-center justify-between cursor-pointer" onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}>
+              <Label>Advanced Options</Label>
+              {showAdvancedOptions ? <ChevronUp /> : <ChevronDown />}
             </div>
-            <Input
-              placeholder="Add keywords (press Enter)"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              onKeyDown={addKeyword}
-            />
-          </div>
 
-          <div className="space-y-4">
-            <Label>Response Tone</Label>
-            <div className="space-y-2">
-              <Slider
-                value={[tone]}
-                onValueChange={(value) => setTone(value[0])}
-                max={100}
-                step={1}
-              />
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Professional</span>
-                <span>Casual</span>
+            {showAdvancedOptions && (
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label>Target Keywords</Label>
+                  <div className="flex gap-2 flex-wrap mb-2">
+                    {keywords.map((kw, i) => (
+                      <Badge
+                        key={i}
+                        variant="secondary"
+                        className="cursor-pointer"
+                        onClick={() => removeKeyword(i)}
+                      >
+                        {kw} ×
+                      </Badge>
+                    ))}
+                  </div>
+                  <Input
+                    placeholder="Add keywords (press Enter)"
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
+                    onKeyDown={addKeyword}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="links">Related Links</Label>
+                  <Textarea
+                    id="links"
+                    {...register("links")}
+                    placeholder="Enter target links (one per line)"
+                    className="min-h-[100px]"
+                  />
+                  {errors.links && (
+                    <p className="text-sm text-destructive">{errors.links.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <Label>Response Tone</Label>
+                  <div className="space-y-2">
+                    <Slider
+                      value={[tone]}
+                      onValueChange={(value) => setTone(value[0])}
+                      max={100}
+                      step={1}
+                    />
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>Professional</span>
+                      <span>Casual</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="subreddits">Target Subreddits</Label>
-            <Textarea
-              id="subreddits"
-              {...register("subreddits", { required: "At least one subreddit is required" })}
-              placeholder="Enter target subreddits (one per line)"
-              className="min-h-[100px]"
-            />
-            {errors.subreddits && (
-              <p className="text-sm text-destructive">{errors.subreddits.message}</p>
             )}
           </div>
         </CardContent>

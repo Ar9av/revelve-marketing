@@ -7,10 +7,11 @@ import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/clerk-react';
 import { Campaign, getCampaigns } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
-import { MovingBorder } from '@/components/ui/moving-border';
+// import { MovingBorder } from '@/components/ui/moving-border';
 import { cn } from '@/lib/utils';
+import ShineBorder from "@/components/ui/shine-border";
 
-export function PromotionsList() {
+export function CampaignsList() {
   const navigate = useNavigate();
   const { user } = useUser();
   const { toast } = useToast();
@@ -60,7 +61,7 @@ export function PromotionsList() {
             )}
           </div>
           <p className="text-sm text-muted-foreground mb-4">
-            {campaign.subreddits.join(', ')}
+            {campaign.links.join(', ')}
           </p>
           <div className="grid grid-cols-3 gap-4">
             <div className="flex items-center gap-2">
@@ -77,7 +78,7 @@ export function PromotionsList() {
             </div>
           </div>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => navigate(`/promotions/${campaign.id}`)}>
+        <Button variant="ghost" size="icon" onClick={() => navigate(`/campaigns/${campaign.id}`)}>
           <ArrowRight className="h-4 w-4" />
         </Button>
       </CardContent>
@@ -85,18 +86,18 @@ export function PromotionsList() {
 
     if (campaign.superboost) {
       return (
-        <MovingBorder
-          duration={3000}
-          containerClassName="cursor-pointer"
-          borderClassName="bg-[--primary] dark:bg-primary/50"
-        >
+        <ShineBorder
+            className="relative flex w-full flex-col items-center justify-center overflow-hidden rounded-lg border bg-background md:shadow-xl"
+            color={["#A07CFE", "#FE8FB5", "#FFBE7B"]}
+          >
           <Card className={cn(
+            "w-full",
             "hover:bg-muted/50 transition-colors",
             "border-none bg-background shadow-xl"
           )}>
             {content}
           </Card>
-        </MovingBorder>
+          </ShineBorder>
       );
     }
 
@@ -110,8 +111,8 @@ export function PromotionsList() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold tracking-tight">Promotions</h2>
-        <Button onClick={() => navigate('/campaigns/new')}>Create Promotion</Button>
+        <h2 className="text-3xl font-bold tracking-tight">Campaigns</h2>
+        <Button onClick={() => navigate('/campaigns/new')}>Create Campaign</Button>
       </div>
 
       <div className="grid gap-4">
@@ -122,9 +123,9 @@ export function PromotionsList() {
         {campaigns.length === 0 && (
           <Card>
             <CardContent className="py-8 text-center">
-              <p className="text-muted-foreground">No promotions found. Create your first promotion to get started!</p>
+              <p className="text-muted-foreground">No campaigns found. Create your first campaign to get started!</p>
               <Button onClick={() => navigate('/campaigns/new')} className="mt-4">
-                Create Promotion
+                Create Campaign
               </Button>
             </CardContent>
           </Card>

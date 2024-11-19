@@ -30,7 +30,7 @@ export interface Campaign {
   description: string;
   keywords: string[];
   tone: number;
-  subreddits: string[];
+  links: string[];
   status: string;
   userId: string;
   createdAt: string;
@@ -75,7 +75,7 @@ export interface CreateCampaignInput {
   description: string;
   keywords: string[];
   tone: number;
-  subreddits: string[];
+  links: string[];
   userId: string;
 }
 
@@ -84,14 +84,14 @@ export interface UpdateCampaignInput {
   description: string;
   keywords: string[];
   tone: number;
-  subreddits: string[];
+  links: string[];
 }
 
 export interface Credit {
   id: string;
   createdAt: string;
   userId: string;
-  promotionId?: string;
+  campaignId?: string;
   expenseType: string;
   creditsValue: number;
   type: string;
@@ -143,8 +143,8 @@ export async function deductCampaignCredits(userId: string, campaignId: string, 
   }
 }
 
-export async function activateSuperboost(promotionId: string, params: SuperboostParams): Promise<Campaign> {
-  const response = await fetch(`${API_URL}/campaigns/${promotionId}/superboost`, {
+export async function activateSuperboost(campaignId: string, params: SuperboostParams): Promise<Campaign> {
+  const response = await fetch(`${API_URL}/campaigns/${campaignId}/superboost`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

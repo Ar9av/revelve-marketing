@@ -1,16 +1,16 @@
-import { useParams} from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
-import { ThumbsUp, MessageSquare, TrendingUp, ArrowUpCircle, Clock, AlertTriangle } from 'lucide-react';
-import { PromotionBoostDialog } from './promotion-boost-dialog';
+import { ThumbsUp, MessageSquare, TrendingUp, ArrowUpCircle, Clock, AlertTriangle, ClockIcon } from 'lucide-react';
+import { CampaignBoostDialog } from './campaign-boost-dialog';
 import { useEffect, useState } from 'react';
 import { Campaign, getCampaignDetails, updateCampaignStatus } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { PromotionReactivateDialog } from './promotion-reactivate-dialog';
-import { PromotionEditDialog } from './promotion-edit-dialog';
+import { CampaignReactivateDialog } from './campaign-reactivate-dialog';
+import { CampaignEditDialog } from './campaign-edit-dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,7 +23,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-export function PromotionDetails() {
+export function CampaignDetails() {
   const { id } = useParams();
   const { toast } = useToast();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
@@ -82,7 +82,7 @@ export function PromotionDetails() {
   if (!campaign) {
     return (
       <div className="flex items-center justify-center h-[50vh]">
-        <p className="text-muted-foreground">Promotion not found</p>
+        <p className="text-muted-foreground">Campaign not found</p>
       </div>
     );
   }
@@ -101,7 +101,7 @@ export function PromotionDetails() {
         <div>
           <h2 className="text-3xl font-bold tracking-tight mb-2">{campaign.title}</h2>
           <div className="flex items-center gap-4">
-            <p className="text-muted-foreground">{campaign.subreddits.join(', ')}</p>
+            <p className="text-muted-foreground">{campaign.links.join(', ')}</p>
             <Badge variant={campaign.status === 'active' ? 'default' : 'secondary'}>
               {campaign.status}
             </Badge>
@@ -110,7 +110,7 @@ export function PromotionDetails() {
         <div className="flex gap-4">
             {campaign.status === 'active' ? (
               <>
-                <PromotionBoostDialog promotionId={campaign.id} />
+                <CampaignBoostDialog campaignId={campaign.id} />
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive" disabled={deactivating}>
@@ -122,7 +122,7 @@ export function PromotionDetails() {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This action will deactivate the campaign. All active promotions will be stopped.
+                        This action will deactivate the campaign. All active campaigns will be stopped.
                         This action cannot be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
@@ -136,12 +136,12 @@ export function PromotionDetails() {
                 </AlertDialog>
               </>
             ) : (
-              <PromotionReactivateDialog 
+              <CampaignReactivateDialog 
                 campaignId={campaign.id} 
                 onReactivate={loadCampaign}
               />
             )}
-            <PromotionEditDialog 
+            <CampaignEditDialog 
               campaign={campaign}
               onUpdate={loadCampaign}
             />
@@ -189,7 +189,7 @@ export function PromotionDetails() {
               <ArrowUpCircle className="h-4 w-4 text-green-500" />
             </div>
             <p className="text-2xl font-bold mt-2">{campaign.postCount || 0}</p>
-            <p className="text-xs text-muted-foreground">Active promotions</p>
+            <p className="text-xs text-muted-foreground">Active campaigns</p>
           </CardContent>
         </Card>
       </div>
@@ -200,69 +200,78 @@ export function PromotionDetails() {
           <CardTitle>Engagement Overview</CardTitle>
         </CardHeader>
         <CardContent className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={engagementData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="engagements" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />
-                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="parentEngagements" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#22c55e" stopOpacity={0.2} />
-                  <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="newPosts" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#eab308" stopOpacity={0.2} />
-                  <stop offset="100%" stopColor="#eab308" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis 
-                dataKey="date" 
-                stroke="hsl(var(--muted-foreground))" 
-                fontSize={12} 
-                tickLine={false} 
-                axisLine={false}
-              />
-              <YAxis
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(value) => `${value}`}
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  background: 'hsl(var(--background))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '6px',
-                }}
-              />
-              <Area
-                type="monotone"
-                dataKey="engagements"
-                stroke="hsl(var(--primary))"
-                fill="url(#engagements)"
-                strokeWidth={2}
-                name="Total Engagements"
-              />
-              <Area
-                type="monotone"
-                dataKey="parentEngagements"
-                stroke="#22c55e"
-                fill="url(#parentEngagements)"
-                strokeWidth={2}
-                name="Parent Post Engagements"
-              />
-              <Area
-                type="monotone"
-                dataKey="newPosts"
-                stroke="#eab308"
-                fill="url(#newPosts)"
-                strokeWidth={2}
-                name="New Posts"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          {engagementData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={engagementData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="engagements" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />
+                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="parentEngagements" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#22c55e" stopOpacity={0.2} />
+                    <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="newPosts" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#eab308" stopOpacity={0.2} />
+                    <stop offset="100%" stopColor="#eab308" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis 
+                  dataKey="date" 
+                  stroke="hsl(var(--muted-foreground))" 
+                  fontSize={12} 
+                  tickLine={false} 
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => `${value}`}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    background: 'hsl(var(--background))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '6px',
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="engagements"
+                  stroke="hsl(var(--primary))"
+                  fill="url(#engagements)"
+                  strokeWidth={2}
+                  name="Total Engagements"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="parentEngagements"
+                  stroke="#22c55e"
+                  fill="url(#parentEngagements)"
+                  strokeWidth={2}
+                  name="Parent Post Engagements"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="newPosts"
+                  stroke="#eab308"
+                  fill="url(#newPosts)"
+                  strokeWidth={2}
+                  name="New Posts"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex justify-center items-center h-full">
+              <div className="text-center">
+                <ClockIcon className="w-10 h-10 mb-2 text-muted-foreground" />
+                <p className="text-muted-foreground">The campaign will start within 24 hours</p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -38,7 +38,7 @@ app.post('/api/campaigns', async (req, res) => {
     await prisma.credit.create({
       data: {
         userId,
-        promotionId: campaign.id,
+        campaignId: campaign.id,
         expenseType: 'debit',
         creditsValue: 100,
         type: 'new-campaign',
@@ -107,7 +107,7 @@ app.post('/api/credits/deduct', async (req, res) => {
     await prisma.credit.create({
       data: {
         userId,
-        promotionId: campaignId,
+        campaignId: campaignId,
         expenseType: 'debit',
         creditsValue: amount,
         type,
