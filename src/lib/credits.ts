@@ -14,13 +14,13 @@ export async function addCredits(
   userId: string, 
   creditsValue: number, 
   type: string, 
-  promotionId?: string,
+  campaignId?: string,
   description?: string
 ) {
   return prisma.credit.create({
     data: {
       userId,
-      promotionId,
+      campaignId,
       expenseType: 'credit',
       creditsValue,
       type,
@@ -33,13 +33,19 @@ export async function deductCredits(
   userId: string, 
   creditsValue: number, 
   type: string, 
-  promotionId?: string,
+  campaignId?: string,
   description?: string
 ) {
+  const currentCredits = await getUserCredits(userId);
+  
+  if (currentCredits < creditsValue) {
+    throw new Error('Insufficient credits');
+  }
+
   return prisma.credit.create({
     data: {
       userId,
-      promotionId,
+      campaignId,
       expenseType: 'debit',
       creditsValue,
       type,
@@ -61,27 +67,5 @@ export async function checkAndDeactivateUserCampaigns(userId: string) {
     });
     return true;
   }
-  return false;
-}
-
-export async function claimCode(userId: string, code: string): Promise<boolean> {
-  // Check if code has been used before by this user
-  const existingClaim = await prisma.credit.findFirst({
-    where: {
-      userId,
-      type: 'claim-code',
-      description: code
-    }
-  });
-
-  if (existingClaim) {
-    return false;
-  }
-
-  if (code === 'REVELVEDUP') {
-    await addCredits(userId, 500, 'claim-code', undefined, code);
-    return true;
-  }
-
   return false;
 }

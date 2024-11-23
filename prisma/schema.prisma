@@ -8,17 +8,19 @@ datasource db {
 }
 
 model Campaign {
-  id          String   @id @default(cuid())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  title       String
-  description String
-  keywords    String[]
-  tone        Int
-  subreddits  String[]
-  status      String   @default("active")
-  userId      String
-  posts       Post[]
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  title           String
+  description     String
+  keywords        String[]
+  tone            Int
+  links           String[]
+  status          String   @default("active")
+  userId          String
+  superboost      Boolean  @default(false)
+  superboostParams Json?
+  posts           Post[]
 }
 
 model Post {
@@ -59,9 +61,9 @@ model Credit {
   id            String   @id @default(cuid())
   createdAt     DateTime @default(now())
   userId        String
-  promotionId   String?
+  campaignId   String?
   expenseType   String   // credit or debit
   creditsValue  Int
-  type          String   // superboost, new-promotion, new-login, topup, claim-code
+  type          String   // superboost, new-campaign, new-login, topup, claim-code
   description   String?
 }

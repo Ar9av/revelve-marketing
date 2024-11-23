@@ -10,49 +10,117 @@ app.use(cors());
 app.use(express.json());
 
 // Create campaign
-// Add to existing campaign routes
 app.post('/api/campaigns', async (req, res) => {
-    try {
-      const { userId } = req.body;
-      
-      // Check user credits
-      const credits = await prisma.credit.findMany({
-        where: { userId }
-      });
-  
-      const totalCredits = credits.reduce((total, credit) => {
-        return total + (credit.expenseType === 'credit' ? credit.creditsValue : -credit.creditsValue);
-      }, 0);
-  
-      if (totalCredits < 50) { // Minimum credits required for new campaign
-        return res.status(400).json({ error: 'Insufficient credits' });
-      }
-  
-      const campaign = await prisma.campaign.create({
-        data: {
-          ...req.body,
-          status: 'active'
-        }
-      });
-  
-      // Deduct initial campaign credits
-      await prisma.credit.create({
-        data: {
-          userId,
-          promotionId: campaign.id,
-          expenseType: 'debit',
-          creditsValue: 50,
-          type: 'new-promotion',
-          description: 'Campaign creation cost'
-        }
-      });
-  
-      res.json(campaign);
-    } catch (error) {
-      console.error('Failed to create campaign:', error);
-      res.status(500).json({ error: 'Failed to create campaign' });
+  try {
+    const { userId } = req.body;
+    
+    // Check user credits
+    const credits = await prisma.credit.findMany({
+      where: { userId }
+    });
+
+    const totalCredits = credits.reduce((total, credit) => {
+      return total + (credit.expenseType === 'credit' ? credit.creditsValue : -credit.creditsValue);
+    }, 0);
+
+    if (totalCredits < 100) { // Campaign creation cost
+      return res.status(400).json({ error: 'Insufficient credits' });
     }
-  });
+
+    const campaign = await prisma.campaign.create({
+      data: {
+        ...req.body,
+        status: 'active'
+      }
+    });
+
+    // Deduct initial campaign credits
+    await prisma.credit.create({
+      data: {
+        userId,
+        campaignId: campaign.id,
+        expenseType: 'debit',
+        creditsValue: 100,
+        type: 'new-campaign',
+        description: 'Campaign creation cost'
+      }
+    });
+
+    res.json(campaign);
+  } catch (error) {
+    console.error('Failed to create campaign:', error);
+    res.status(500).json({ error: 'Failed to create campaign' });
+  }
+});
+
+// Superboost campaign
+app.post('/api/campaigns/:id/superboost', async (req, res) => {
+  try {
+    const { superboostParams } = req.body;
+    const campaign = await prisma.campaign.findUnique({
+      where: { id: req.params.id }
+    });
+
+    if (!campaign) {
+      return res.status(404).json({ error: 'Campaign not found' });
+    }
+
+    // Check if campaign is already boosted
+    if (campaign.superboost) {
+      return res.status(400).json({ error: 'Campaign is already boosted' });
+    }
+
+    const updatedCampaign = await prisma.campaign.update({
+      where: { id: req.params.id },
+      data: {
+        superboost: true,
+        superboostParams
+      }
+    });
+
+    res.json(updatedCampaign);
+  } catch (error) {
+    console.error('Failed to activate superboost:', error);
+    res.status(500).json({ error: 'Failed to activate superboost' });
+  }
+});
+
+// Deduct credits
+app.post('/api/credits/deduct', async (req, res) => {
+  try {
+    const { userId, campaignId, amount, type } = req.body;
+
+    // Check current credits
+    const credits = await prisma.credit.findMany({
+      where: { userId }
+    });
+
+    const totalCredits = credits.reduce((total, credit) => {
+      return total + (credit.expenseType === 'credit' ? credit.creditsValue : -credit.creditsValue);
+    }, 0);
+
+    if (totalCredits < amount) {
+      return res.status(400).json({ error: 'Insufficient credits' });
+    }
+
+    // Create debit transaction
+    await prisma.credit.create({
+      data: {
+        userId,
+        campaignId: campaignId,
+        expenseType: 'debit',
+        creditsValue: amount,
+        type,
+        description: `${type} cost`
+      }
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Failed to deduct credits:', error);
+    res.status(500).json({ error: 'Failed to deduct credits' });
+  }
+});
 
 // Update campaign status
 app.patch('/api/campaigns/:id/status', async (req, res) => {
@@ -283,89 +351,88 @@ app.get('/api/campaigns/details/:id', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+app.get('/api/credits/:userId', async (req, res) => {
+  try {
+    const credits = await prisma.credit.findMany({
+      where: { userId: req.params.userId },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const totalCredits = credits.reduce((total, credit) => {
+      return total + (credit.expenseType === 'credit' ? credit.creditsValue : -credit.creditsValue);
+    }, 0);
+
+    res.json({ credits, totalCredits });
+  } catch (error) {
+    console.error('Failed to fetch credits:', error);
+    res.status(500).json({ error: 'Failed to fetch credits' });
+  }
 });
 
-app.get('/api/credits/:userId', async (req, res) => {
-    try {
-      const credits = await prisma.credit.findMany({
-        where: { userId: req.params.userId },
-        orderBy: { createdAt: 'desc' }
-      });
-  
-      const totalCredits = credits.reduce((total, credit) => {
-        return total + (credit.expenseType === 'credit' ? credit.creditsValue : -credit.creditsValue);
-      }, 0);
-  
-      res.json({ credits, totalCredits });
-    } catch (error) {
-      console.error('Failed to fetch credits:', error);
-      res.status(500).json({ error: 'Failed to fetch credits' });
-    }
-  });
+app.post('/api/credits/claim', async (req, res) => {
+  try {
+    const { userId, code } = req.body;
+    
+    const existingClaim = await prisma.credit.findFirst({
+      where: {
+        userId,
+        type: 'claim-code',
+        description: code
+      }
+    });
 
-  app.post('/api/credits/claim', async (req, res) => {
-    try {
-      const { userId, code } = req.body;
-      
-      const existingClaim = await prisma.credit.findFirst({
-        where: {
+    if (existingClaim) {
+      return res.status(400).json({ error: 'Code already claimed' });
+    }
+
+    if (code === 'REVELVEDUP') {
+      await prisma.credit.create({
+        data: {
           userId,
+          expenseType: 'credit',
+          creditsValue: 500,
           type: 'claim-code',
           description: code
         }
       });
-  
-      if (existingClaim) {
-        return res.status(400).json({ error: 'Code already claimed' });
-      }
-  
-      if (code === 'REVELVEDUP') {
-        await prisma.credit.create({
-          data: {
-            userId,
-            expenseType: 'credit',
-            creditsValue: 500,
-            type: 'claim-code',
-            description: code
-          }
-        });
-        return res.json({ success: true, credits: 500 });
-      }
-  
-      res.status(400).json({ error: 'Invalid code' });
-    } catch (error) {
-      console.error('Failed to claim code:', error);
-      res.status(500).json({ error: 'Failed to claim code' });
+      return res.json({ success: true, credits: 500 });
     }
-  });
 
-  app.post('/api/credits/check-new-user', async (req, res) => {
-    try {
-      const { userId } = req.body;
-      
-      const existingCredits = await prisma.credit.findFirst({
-        where: { userId }
+    res.status(400).json({ error: 'Invalid code' });
+  } catch (error) {
+    console.error('Failed to claim code:', error);
+    res.status(500).json({ error: 'Failed to claim code' });
+  }
+});
+
+app.post('/api/credits/check-new-user', async (req, res) => {
+  try {
+    const { userId } = req.body;
+    
+    const existingCredits = await prisma.credit.findFirst({
+      where: { userId }
+    });
+
+    if (!existingCredits) {
+      await prisma.credit.create({
+        data: {
+          userId,
+          expenseType: 'credit',
+          creditsValue: 500,
+          type: 'new-login',
+          description: 'Welcome gift from Revelve'
+        }
       });
-  
-      if (!existingCredits) {
-        await prisma.credit.create({
-          data: {
-            userId,
-            expenseType: 'credit',
-            creditsValue: 500,
-            type: 'new-login',
-            description: 'Welcome gift from Revelve'
-          }
-        });
-        return res.json({ isNewUser: true, credits: 500 });
-      }
-  
-      res.json({ isNewUser: false });
-    } catch (error) {
-      console.error('Failed to check new user:', error);
-      res.status(500).json({ error: 'Failed to check new user' });
+      return res.json({ isNewUser: true, credits: 500 });
     }
-  });
 
+    res.json({ isNewUser: false });
+  } catch (error) {
+    console.error('Failed to check new user:', error);
+    res.status(500).json({ error: 'Failed to check new user' });
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});

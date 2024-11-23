@@ -4,8 +4,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-ro
 import { Dashboard } from '@/components/dashboard';
 import { CampaignForm } from '@/components/campaign-form';
 import { LandingPage } from '@/components/landing-page';
-import { PromotionsList } from '@/components/promotions/promotion-list';
-import { PromotionDetails } from '@/components/promotions/promotion-details';
+import { CampaignsList } from '@/components/campaigns/campaign-list';
+import { CampaignDetails } from '@/components/campaigns/campaign-details';
 import { CreditsPage } from '@/components/credits/credits-page';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Rocket } from 'lucide-react';
@@ -23,8 +23,8 @@ function ProtectedApp() {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/campaigns/new" element={<CampaignForm />} />
-        <Route path="/promotions" element={<PromotionsList />} />
-        <Route path="/promotions/:id" element={<PromotionDetails />} />
+        <Route path="/campaigns" element={<CampaignsList />} />
+        <Route path="/campaigns/:id" element={<CampaignDetails />} />
         <Route path="/credits" element={<CreditsPage />} />
       </Routes>
     </SignedIn>

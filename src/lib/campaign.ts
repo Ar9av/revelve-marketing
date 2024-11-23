@@ -5,7 +5,7 @@ export interface CreateCampaignInput {
   description: string;
   keywords: string[];
   tone: number;
-  subreddits: string[];
+  links: string[];
   userId: string;
   productName: string;
 }

@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3001/api';
+const API_URL = 'http://localhost:3000/api';
 
 export interface Post {
   id: string;
@@ -30,14 +30,29 @@ export interface Campaign {
   description: string;
   keywords: string[];
   tone: number;
-  subreddits: string[];
+  links: string[];
   status: string;
   userId: string;
   createdAt: string;
   updatedAt: string;
+  superboost: boolean;
+  superboostParams?: any;
   stats?: CampaignStats;
   postCount?: number;
   posts?: Post[];
+  dailyStats?: Array<{
+    date: string;
+    engagements: number;
+    parentEngagements: number;
+    newPosts: number;
+  }>;
+}
+
+export interface SuperboostParams {
+  type: string;
+  regions: string[];
+  messageTemplate?: string;
+  dailyLimit?: number;
 }
 
 export interface DashboardData {
@@ -60,7 +75,7 @@ export interface CreateCampaignInput {
   description: string;
   keywords: string[];
   tone: number;
-  subreddits: string[];
+  links: string[];
   userId: string;
 }
 
@@ -69,24 +84,24 @@ export interface UpdateCampaignInput {
   description: string;
   keywords: string[];
   tone: number;
-  subreddits: string[];
+  links: string[];
 }
 
 export interface Credit {
-    id: string;
-    createdAt: string;
-    userId: string;
-    promotionId?: string;
-    expenseType: string;
-    creditsValue: number;
-    type: string;
-    description?: string;
-  }
-  
-  export interface CreditsResponse {
-    credits: Credit[];
-    totalCredits: number;
-  }
+  id: string;
+  createdAt: string;
+  userId: string;
+  campaignId?: string;
+  expenseType: string;
+  creditsValue: number;
+  type: string;
+  description?: string;
+}
+
+export interface CreditsResponse {
+  credits: Credit[];
+  totalCredits: number;
+}
 
 export async function createCampaign(data: CreateCampaignInput): Promise<Campaign> {
   const response = await fetch(`${API_URL}/campaigns`, {
@@ -105,46 +120,76 @@ export async function createCampaign(data: CreateCampaignInput): Promise<Campaig
 }
 
 export async function getUserCredits(userId: string): Promise<CreditsResponse> {
-    const response = await fetch(`${API_URL}/credits/${userId}`);
-  
-    if (!response.ok) {
-      throw new Error('Failed to fetch credits');
-    }
-  
-    return response.json();
+  const response = await fetch(`${API_URL}/credits/${userId}`);
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch credits');
   }
 
-  export async function claimCode(userId: string, code: string): Promise<{ success: boolean; credits?: number }> {
-    const response = await fetch(`${API_URL}/credits/claim`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ userId, code }),
-    });
-  
-    if (!response.ok) {
-      throw new Error('Failed to claim code');
-    }
-  
-    return response.json();
+  return response.json();
+}
+
+export async function deductCampaignCredits(userId: string, campaignId: string, amount: number, type: string): Promise<void> {
+  const response = await fetch(`${API_URL}/credits/deduct`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ userId, campaignId, amount, type }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to deduct credits');
+  }
+}
+
+export async function activateSuperboost(campaignId: string, params: SuperboostParams): Promise<Campaign> {
+  const response = await fetch(`${API_URL}/campaigns/${campaignId}/superboost`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ superboostParams: params }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to activate superboost');
   }
 
-  export async function checkNewUser(userId: string): Promise<{ isNewUser: boolean; credits?: number }> {
-    const response = await fetch(`${API_URL}/credits/check-new-user`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ userId }),
-    });
-  
-    if (!response.ok) {
-      throw new Error('Failed to check new user');
-    }
-  
-    return response.json();
+  return response.json();
+}
+
+export async function claimCode(userId: string, code: string): Promise<{ success: boolean; credits?: number }> {
+  const response = await fetch(`${API_URL}/credits/claim`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ userId, code }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to claim code');
   }
+
+  return response.json();
+}
+
+export async function checkNewUser(userId: string): Promise<{ isNewUser: boolean; credits?: number }> {
+  const response = await fetch(`${API_URL}/credits/check-new-user`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ userId }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to check new user');
+  }
+
+  return response.json();
+}
 
 export async function updateCampaignStatus(id: string, status: string): Promise<Campaign> {
   const response = await fetch(`${API_URL}/campaigns/${id}/status`, {

@@ -15,12 +15,12 @@ import {
   import { updateCampaignStatus } from '@/lib/api';
   import { useToast } from '@/hooks/use-toast';
   
-  interface PromotionReactivateDialogProps {
+  interface CampaignReactivateDialogProps {
     campaignId: string;
     onReactivate: () => void;
   }
   
-  export function PromotionReactivateDialog({ campaignId, onReactivate }: PromotionReactivateDialogProps) {
+  export function CampaignReactivateDialog({ campaignId, onReactivate }: CampaignReactivateDialogProps) {
     const { toast } = useToast();
     const [isReactivating, setIsReactivating] = useState(false);
   
@@ -57,7 +57,7 @@ import {
           <AlertDialogHeader>
             <AlertDialogTitle>Reactivate Campaign?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will reactivate your campaign and resume all promotional activities.
+              This will reactivate your campaign and resume all campaignal activities.
               You will be charged 10 credits per day for running this campaign.
               Make sure you have sufficient credits in your account.
             </AlertDialogDescription>
