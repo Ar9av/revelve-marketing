@@ -1,5 +1,5 @@
 //src/lib/api.ts
-const API_URL = '';
+const API_URL = 'api';
 
 export interface Post {
   id: string;
