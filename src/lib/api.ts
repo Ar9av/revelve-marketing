@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:3001/api';
+//src/lib/api.ts
+const API_URL = '';
 
 export interface Post {
   id: string;
