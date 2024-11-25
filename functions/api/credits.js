@@ -1,8 +1,10 @@
-import { prisma } from '../../src/lib/db';
+import { getPrismaClient } from '../db';
+// import {prisma} from '../../src/lib/db';
 
-export async function onRequestGet(context) {
-  const url = new URL(context.request.url);
+export async function onRequestGet(context, env) {
+  const url = new URL(context.url);
   const userId = url.searchParams.get('userId');
+  const prisma = getPrismaClient(env.DATABASE_URL);
 
   if (!userId) {
     return new Response(JSON.stringify({ error: 'userId query parameter is required' }), { status: 400 });

@@ -1,8 +1,9 @@
-import { prisma } from '../../../src/lib/db';
 import { format } from 'date-fns';
+import { getPrismaClient } from '../../db';
 
-export async function onRequestGet(context) {
+export async function onRequestGet(context, env) {
   const { id } = context.params;
+  const prisma = getPrismaClient(env.DATABASE_URL);
 
   try {
     const campaign = await prisma.campaign.findUnique({
