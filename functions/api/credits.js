@@ -1,7 +1,7 @@
 import { getPrismaClient } from '../db';
 // import {prisma} from '../../src/lib/db';
 
-export async function onRequestGet(context, env) {
+export async function onRequestGet({context, env}) {
   const url = new URL(context.url);
   const userId = url.searchParams.get('userId');
   const prisma = getPrismaClient(env.DATABASE_URL);

@@ -1,7 +1,7 @@
 // import { prisma } from '../../src/lib/db';
 import { getPrismaClient } from '../db';
 
-export async function onRequestPost(context, env) {
+export async function onRequestPost({context, env}) {
   try {
     const req = await context.request.json();
     const { userId } = req;
