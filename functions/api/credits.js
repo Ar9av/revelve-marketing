@@ -1,4 +1,4 @@
-import { prisma } from '../../src/lib/db';
+import { prisma } from '../db';
 
 export async function onRequestGet(context) {
   const url = new URL(context.request.url);
@@ -20,6 +20,6 @@ export async function onRequestGet(context) {
 
     return new Response(JSON.stringify({ credits, totalCredits }), { status: 200 });
   } catch (error) {
-    return new Response(JSON.stringify({ error: 'Failed to fetch credits' }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'Failed to fetch credits, ' + error }), { status: 500 });
   }
 }
