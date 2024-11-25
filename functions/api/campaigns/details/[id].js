@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { getPrismaClient } from '../../db';
+import { getPrismaClient } from '../../../db';
 
 export async function onRequestGet(context) {
   const { id } = context.params;
@@ -9,7 +9,7 @@ export async function onRequestGet(context) {
     const campaign = await prisma.campaign.findUnique({
       where: { id },
       include: {
-        posts: {
+    posts: {
           include: {
             dailyStats: { orderBy: { date: 'asc' } }
           },
