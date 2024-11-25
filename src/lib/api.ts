@@ -210,7 +210,7 @@ export async function updateCampaignStatus(id: string, status: string): Promise<
 
 export async function updateCampaignDetails(id: string, data: UpdateCampaignInput): Promise<Campaign> {
   const response = await fetch(`${API_URL}/campaigns/${id}`, {
-    method: 'PUT',
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
