@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 import { getPrismaClient } from '../../db';
 
-export async function onRequestGet(context, env) {
+export async function onRequestGet({context, env}) {
   const { id } = context.params;
   const prisma = getPrismaClient(env.DATABASE_URL);
 
