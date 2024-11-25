@@ -1,4 +1,4 @@
-import { getPrismaClient } from '../../db';
+import { getPrismaClient } from '../../../db';
 
 export async function onRequestPost(context) {
   const { id } = context.params;
