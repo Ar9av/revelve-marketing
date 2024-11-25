@@ -22,4 +22,4 @@ const pool = new Pool({ connectionString })
 const adapter = new PrismaNeon(pool)
 const prisma = new PrismaClient({ adapter })
 
-export default prisma;
+export { prisma };
