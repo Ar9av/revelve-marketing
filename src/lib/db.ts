@@ -15,7 +15,8 @@ import ws from 'ws'
 
 // Setup
 neonConfig.webSocketConstructor = ws
-const connectionString = `${import.meta.env.DATABASE_URL}`
+// const connectionString = `${import.meta.env.DATABASE_URL}`
+const connectionString = process.env.DATABASE_URL
 
 // Init prisma client
 const pool = new Pool({ connectionString })
