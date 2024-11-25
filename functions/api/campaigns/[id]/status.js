@@ -1,7 +1,7 @@
 import { getPrismaClient } from '../../../db';
 
-export async function onRequestPatch({context, env}) {
-  const prisma = getPrismaClient(env.DATABASE_URL);
+export async function onRequestPatch(context) {
+  const prisma = getPrismaClient(context.env.DATABASE_URL);
   const { id } = context.params;
   const reqBody = await context.request.json();
 

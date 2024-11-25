@@ -1,11 +1,11 @@
 // import { prisma } from '../../src/lib/db';
 import { getPrismaClient } from '../db';
 
-export async function onRequestPost({context, env}) {
+export async function onRequestPost(context) {
   try {
     const req = await context.request.json();
     const { userId } = req;
-    const prisma = getPrismaClient(env.DATABASE_URL);
+    const prisma = getPrismaClient(context.env.DATABASE_URL);
 
     // Check user credits
     const credits = await prisma.credit.findMany({
