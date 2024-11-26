@@ -23,6 +23,6 @@ export async function onRequestPost(context) {
 
     return new Response(JSON.stringify(updatedCampaign), { status: 200 });
   } catch (error) {
-    return new Response(JSON.stringify({ error: 'Failed to activate superboost' }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'Failed to activate superboost', details: error.message }), { status: 500 });
   }
 }
