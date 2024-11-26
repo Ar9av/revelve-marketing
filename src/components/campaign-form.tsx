@@ -99,7 +99,7 @@ export function CampaignForm() {
         description: formData.description,
         keywords: keywords,
         tone: tone,
-        links: formData.links.split('\n').filter(s => s.trim()),
+        links: formData.links ? formData.links.split('\n').filter(s => s.trim()) : [],
         userId: user.id
       });
 
