@@ -15,10 +15,12 @@ export async function onRequestPost(context) {
     if (campaign.superboost) {
       return new Response(JSON.stringify({ error: 'Campaign is already boosted' }), { status: 400 });
     }
-
     const updatedCampaign = await prisma.campaign.update({
       where: { id },
-      data: { superboost: true, ...reqBody.superboostParams }
+      data: {
+        superboost: true,
+        superboostParams: reqBody.superboostParams || null
+      }
     });
 
     return new Response(JSON.stringify(updatedCampaign), { status: 200 });

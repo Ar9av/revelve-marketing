@@ -75,7 +75,7 @@ app.post('/api/campaigns/:id/superboost', async (req, res) => {
       where: { id: req.params.id },
       data: {
         superboost: true,
-        superboostParams
+        superboostParams: superboostParams || null
       }
     });
 
