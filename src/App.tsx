@@ -10,7 +10,6 @@ import { CreditsPage } from '@/components/credits/credits-page';
 import { PrivacyPolicy } from '@/components/pages/privacy-policy';
 import { TermsAndConditions } from '@/components/pages/terms-and-conditions';
 import { Sidebar } from '@/components/layout/sidebar';
-import { Footer } from '@/components/layout/footer';
 import { Rocket } from 'lucide-react';
 import { ClerkProvider, SignIn, SignUp, SignedIn, SignedOut } from '@clerk/clerk-react';
 import { UserButton } from '@clerk/clerk-react';
@@ -61,7 +60,6 @@ function MainLayout() {
           <ProtectedApp />
         </div>
       </main>
-      <Footer />
     </div>
   );
 }
@@ -80,7 +78,6 @@ function App() {
               <Route path="/terms" element={<TermsAndConditions />} />
               <Route path="*" element={<Navigate to="/sign-in" replace />} />
             </Routes>
-            <Footer />
           </SignedOut>
           <SignedIn>
             <Routes>

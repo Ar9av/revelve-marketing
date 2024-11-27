@@ -8,7 +8,7 @@ import {
   Check,
   X,
 } from "lucide-react";
-
+import { Footer } from "@/components/layout/footer";
 import {
   Accordion,
   AccordionContent,
@@ -19,16 +19,19 @@ import { useNavigate } from "react-router-dom";
 import { ModeToggle } from "./mode-toggle";
 import { TextHoverEffect } from "@/components/ui/text-hover-effect";
 import { UserButton } from '@clerk/clerk-react';
+import RetroGrid from "@/components/ui/retro-grid";
+
 export function LandingPage({ isSignedIn }: { isSignedIn: boolean }) {
   const navigate = useNavigate();
 
   return (
     <div className="w-full">
+      <RetroGrid className="absolute top-0 left-0 h-full"/>
       {/* Header */}
       <header className="fixed top-0 w-full border-b bg-background/80 backdrop-blur-sm z-50">
         <div className="flex h-16 items-center justify-between w-full px-4">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-          <Rocket className="h-6 w-6" />
+          <Rocket className="h-8 w-6" />
             <h1 className="text-xl font-bold">Revelve</h1>
           </div>
           <div className="flex items-start gap-4 justify-end">
@@ -49,13 +52,13 @@ export function LandingPage({ isSignedIn }: { isSignedIn: boolean }) {
       <section className="min-h-[55vh] pt-16 pb-10 px-4 flex items-center">
         <div className="container mx-auto text-center">
           <div className="h-[15rem] flex items-center justify-center">
-            <TextHoverEffect text="Revelve" />
+            <TextHoverEffect text="Revelve" duration={0.2} />
           </div>
           <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-blue-500">
             Automate Your Reddit Marketing
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Generate authentic, human-like responses for your product across relevant Reddit threads
+            Generate authentic, human responses for your product across relevant Reddit threads
           </p>
           <div className="flex gap-4 justify-center">
             {isSignedIn ? (
@@ -178,6 +181,7 @@ export function LandingPage({ isSignedIn }: { isSignedIn: boolean }) {
           </div>
         </section>
       )}
+      <Footer />
     </div>
   );
 }
