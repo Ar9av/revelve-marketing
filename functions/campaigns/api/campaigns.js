@@ -1,9 +1,9 @@
 import { getPrismaClient } from '../../db';
 
 export async function onRequestPost(context) {
-  const { userId } = await context.request.json();
+  const requestBody = await context.request.json();
+  const { userId } = requestBody;
   const prisma = getPrismaClient(context.env.DATABASE_URL);
-
   try {
     // Check user credits
     const credits = await prisma.credit.findMany({
@@ -20,7 +20,7 @@ export async function onRequestPost(context) {
 
     const campaign = await prisma.campaign.create({
       data: {
-        ...await context.request.json(),
+        ...requestBody,
         status: 'active'
       }
     });
