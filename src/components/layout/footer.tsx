@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { Mail } from 'lucide-react';
-import React from 'react';
 export function Footer() {
   return (
     <footer className="border-t bg-background">
