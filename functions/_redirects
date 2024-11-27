@@ -1,0 +1,5 @@
+/campaigns/api/credits/:userId /api/credits/:userId 302
+/campaigns/api/campaigns/:id /api/campaigns/:id 302
+/campaigns/api/campaigns/:id/superboost /api/campaigns/:id/superboost 302
+/campaigns/api/campaigns/:id/status /api/campaigns/:id/status 302
+/campaigns/api/campaigns/details/:id /api/campaigns/details/:id 302

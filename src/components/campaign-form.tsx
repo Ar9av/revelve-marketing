@@ -47,7 +47,7 @@ export function CampaignForm() {
     async function loadCredits() {
       if (!user) return;
       try {
-        const response = await getUserCredits(user.id);
+        const response = await getUserCredits(user?.id || '');
         setCredits(response.totalCredits);
       } catch (error) {
         console.error('Failed to load credits:', error);
@@ -99,7 +99,7 @@ export function CampaignForm() {
         description: formData.description,
         keywords: keywords,
         tone: tone,
-        links: formData.links.split('\n').filter(s => s.trim()),
+        links: formData.links ? formData.links.split('\n').filter(s => s.trim()) : [],
         userId: user.id
       });
 

@@ -1,3 +1,4 @@
+//server/index.ts
 import express from 'express';
 import cors from 'cors';
 import { prisma } from '../src/lib/db';
@@ -74,7 +75,7 @@ app.post('/api/campaigns/:id/superboost', async (req, res) => {
       where: { id: req.params.id },
       data: {
         superboost: true,
-        superboostParams
+        superboostParams: superboostParams || null
       }
     });
 

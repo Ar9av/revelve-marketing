@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:3000/api';
+//src/lib/api.ts
+const API_URL = 'api';
 
 export interface Post {
   id: string;
@@ -209,7 +210,7 @@ export async function updateCampaignStatus(id: string, status: string): Promise<
 
 export async function updateCampaignDetails(id: string, data: UpdateCampaignInput): Promise<Campaign> {
   const response = await fetch(`${API_URL}/campaigns/${id}`, {
-    method: 'PUT',
+    method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
