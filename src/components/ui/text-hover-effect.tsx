@@ -57,12 +57,14 @@ export const TextHoverEffect: React.FC<{ text: string; duration?: number }> = ({
           gradientUnits="userSpaceOnUse"
           r="20%"
           animate={maskPosition}
+          cx={maskPosition.cx}
+          cy={maskPosition.cy}
           // example for a smoother animation below
-          //   transition={{
-          //     type: "spring",
-          //     stiffness: 300,
-          //     damping: 50,
-          //   }}
+            // transition={{
+            //   type: "spring",
+            //   stiffness: 300,
+            //   damping: 50,
+            // }}
           transition={{ duration: duration ?? 0, ease: "easeOut" }}>
           <stop offset="0%" stopColor="white" />
           <stop offset="100%" stopColor="black" />
