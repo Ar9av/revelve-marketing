@@ -13,6 +13,7 @@ import { Sidebar } from '@/components/layout/sidebar';
 import { Rocket } from 'lucide-react';
 import { ClerkProvider, SignIn, SignUp, SignedIn, SignedOut } from '@clerk/clerk-react';
 import { UserButton } from '@clerk/clerk-react';
+import { CurrencyProvider } from '@/contexts/currency-context';
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -68,24 +69,26 @@ function App() {
   return (
     <ClerkProvider publishableKey={clerkPubKey}>
       <ThemeProvider defaultTheme="system" storageKey="reddit-marketing-theme">
-        <Router>
-          <SignedOut>
-            <Routes>
-              <Route path="/" element={<LandingPage isSignedIn={false} />} />
-              <Route path="/sign-in/*" element={<SignIn routing="path" path="/sign-in" />} />
-              <Route path="/sign-up/*" element={<SignUp routing="path" path="/sign-up" />} />
-              <Route path="/privacy" element={<PrivacyPolicy />} />
-              <Route path="/terms" element={<TermsAndConditions />} />
-              <Route path="*" element={<Navigate to="/sign-in" replace />} />
-            </Routes>
-          </SignedOut>
-          <SignedIn>
-            <Routes>
-              <Route path="/" element={<LandingPage isSignedIn={true} />} />
-              <Route path="/*" element={<MainLayout />} />
-            </Routes>
-          </SignedIn>
-        </Router>
+        <CurrencyProvider>
+          <Router>
+            <SignedOut>
+              <Routes>
+                <Route path="/" element={<LandingPage isSignedIn={false} />} />
+                <Route path="/sign-in/*" element={<SignIn routing="path" path="/sign-in" />} />
+                <Route path="/sign-up/*" element={<SignUp routing="path" path="/sign-up" />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsAndConditions />} />
+                <Route path="*" element={<Navigate to="/sign-in" replace />} />
+              </Routes>
+            </SignedOut>
+            <SignedIn>
+              <Routes>
+                <Route path="/" element={<LandingPage isSignedIn={true} />} />
+                <Route path="/*" element={<MainLayout />} />
+              </Routes>
+            </SignedIn>
+          </Router>
+        </CurrencyProvider>
       </ThemeProvider>
     </ClerkProvider>
   );

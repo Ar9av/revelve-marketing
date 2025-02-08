@@ -8,6 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Input } from '../ui/input';
+import { useCurrency } from '@/contexts/currency-context';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface CustomCredit {
   type: string;
@@ -20,9 +22,38 @@ interface CustomCredit {
   creditsValue: number;
 }
 
+interface CreditPackage {
+  name: string;
+  credits: number;
+  price: number;
+  features: string[];
+}
+
+const creditPackages: CreditPackage[] = [
+  {
+    name: 'Starter',
+    credits: 1000,
+    price: 9.99,
+    features: ['Basic campaign boost', 'Standard targeting']
+  },
+  {
+    name: 'Pro',
+    credits: 5000,
+    price: 39.99,
+    features: ['Advanced campaign boost', 'Geographic targeting', 'DM campaigns']
+  },
+  {
+    name: 'Enterprise',
+    credits: 20000,
+    price: 149.99,
+    features: ['Maximum campaign boost', 'Global targeting', 'Priority DM campaigns', 'Custom targeting']
+  }
+];
+
 export function CreditsPage() {
   const { user } = useUser();
   const { toast } = useToast();
+  const { currency, setCurrency, formatPrice } = useCurrency();
   const [loading, setLoading] = useState(true);
   const [credits, setCredits] = useState<CustomCredit[]>([]);
   const [totalCredits, setTotalCredits] = useState(0);
@@ -85,13 +116,45 @@ export function CreditsPage() {
     }
   };
 
+  const handlePurchase = async (selectedPackage: CreditPackage) => {
+    if (!user) return;
+    
+    try {
+      console.log(`Processing purchase for package: ${selectedPackage.name}`);
+      // TODO: Implement purchase logic
+      toast({
+        title: "Coming Soon",
+        description: "Purchase functionality will be available soon!",
+      });
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      console.error('Purchase error:', errorMessage);
+      toast({
+        title: "Error",
+        description: "Failed to process purchase. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (loading) {
     return <div className="flex justify-center">Loading...</div>;
   }
 
   return (
     <div className="space-y-6">
-      <h2 className="text-3xl font-bold tracking-tight">Credits Management</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-3xl font-bold tracking-tight">Credits Management</h2>
+        <Select value={currency} onValueChange={(value) => setCurrency(value as 'USD' | 'INR')}>
+          <SelectTrigger className="w-[100px]">
+            <SelectValue placeholder="Currency" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="INR">INR</SelectItem>
+            <SelectItem value="USD">USD</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Credits Overview */}
       <div className="grid gap-4 md:grid-cols-2">
@@ -160,18 +223,18 @@ export function CreditsPage() {
                 <p className="text-sm text-muted-foreground">credits</p>
               </div>
               <div>
-                <p className="text-2xl font-bold">${pkg.price}</p>
-                <p className="text-sm text-muted-foreground">one-time payment</p>
+                <p className="text-2xl font-bold">{formatPrice(pkg.price)}</p>
               </div>
               <ul className="space-y-2">
-                {pkg.features.map((feature) => (
-                  <li key={feature} className="text-sm flex items-center gap-2">
-                    <Coins className="h-4 w-4 text-primary" />
-                    {feature}
+                {pkg.features.map((feature, i) => (
+                  <li key={i} className="text-sm text-muted-foreground">
+                    • {feature}
                   </li>
                 ))}
               </ul>
-              <Button className="w-full">Purchase</Button>
+              <Button className="w-full" onClick={() => handlePurchase(pkg)}>
+                Purchase
+              </Button>
             </CardContent>
           </Card>
         ))}
@@ -231,24 +294,3 @@ function getTransactionDescription(type: string): string {
       return 'Transaction';
   }
 }
-
-const creditPackages = [
-  {
-    name: 'Starter',
-    credits: 1000,
-    price: 9.99,
-    features: ['Basic campaign boost', 'Standard targeting']
-  },
-  {
-    name: 'Pro',
-    credits: 5000,
-    price: 39.99,
-    features: ['Advanced campaign boost', 'Geographic targeting', 'DM campaigns']
-  },
-  {
-    name: 'Enterprise',
-    credits: 20000,
-    price: 149.99,
-    features: ['Maximum campaign boost', 'Global targeting', 'Priority DM campaigns', 'Custom targeting']
-  }
-];

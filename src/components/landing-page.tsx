@@ -20,9 +20,12 @@ import { ModeToggle } from "./mode-toggle";
 import { TextHoverEffect } from "@/components/ui/text-hover-effect";
 import { UserButton } from '@clerk/clerk-react';
 import RetroGrid from "@/components/ui/retro-grid";
+import { useCurrency } from '@/contexts/currency-context';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function LandingPage({ isSignedIn }: { isSignedIn: boolean }) {
   const navigate = useNavigate();
+  const { currency, setCurrency, formatPrice } = useCurrency();
 
   return (
     <div className="w-full">
@@ -101,16 +104,29 @@ export function LandingPage({ isSignedIn }: { isSignedIn: boolean }) {
       {!isSignedIn && (
         <section className="py-32">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-4">Simple Pricing</h2>
-            <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
-              Choose the perfect plan for your marketing needs. All plans include our core features.
-            </p>
+            <div className="flex flex-col items-center mb-12">
+              <div className="text-center mb-6">
+                <h2 className="text-3xl font-bold text-center mb-4">Simple Pricing</h2>
+                <p className="text-muted-foreground text-center max-w-2xl">
+                  Choose the perfect plan for your marketing needs. All plans include our core features.
+                </p>
+              </div>
+              <Select value={currency} onValueChange={(value) => setCurrency(value as 'USD' | 'INR')}>
+                <SelectTrigger className="w-[100px]">
+                  <SelectValue placeholder="Currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="INR">INR</SelectItem>
+                  <SelectItem value="USD">USD</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
               {pricingPlans.map((plan, index) => (
                 <div key={index} className="p-6 rounded-lg border bg-card">
                   <h3 className="text-2xl font-semibold mb-2">{plan.name}</h3>
                   <div className="mb-4">
-                    <span className="text-4xl font-bold">${plan.price}</span>
+                    <span className="text-4xl font-bold">{formatPrice(plan.price)}</span>
                     <span className="text-muted-foreground">/month</span>
                   </div>
                   <p className="text-muted-foreground mb-6">{plan.description}</p>
